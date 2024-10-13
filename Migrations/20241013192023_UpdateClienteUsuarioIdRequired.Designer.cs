@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -11,9 +12,11 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(TareasContext))]
-    partial class TareasContextModelSnapshot : ModelSnapshot
+    [Migration("20241013192023_UpdateClienteUsuarioIdRequired")]
+    partial class UpdateClienteUsuarioIdRequired
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,6 +55,8 @@ namespace webapi.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ClienteId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Clientes");
                 });
@@ -231,7 +236,7 @@ namespace webapi.Migrations
                         {
                             TareaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb410"),
                             CategoriaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb4ef"),
-                            FechaCreacion = new DateTime(2024, 10, 13, 13, 26, 34, 14, DateTimeKind.Local).AddTicks(1347),
+                            FechaCreacion = new DateTime(2024, 10, 13, 13, 20, 23, 490, DateTimeKind.Local).AddTicks(6679),
                             PrioridadTarea = 1,
                             Titulo = "Pago de servicios publicos"
                         },
@@ -239,10 +244,21 @@ namespace webapi.Migrations
                         {
                             TareaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb411"),
                             CategoriaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb402"),
-                            FechaCreacion = new DateTime(2024, 10, 13, 13, 26, 34, 14, DateTimeKind.Local).AddTicks(1359),
+                            FechaCreacion = new DateTime(2024, 10, 13, 13, 20, 23, 490, DateTimeKind.Local).AddTicks(6699),
                             PrioridadTarea = 0,
                             Titulo = "Terminar de ver pelicula en netflix"
                         });
+                });
+
+            modelBuilder.Entity("Cliente", b =>
+                {
+                    b.HasOne("Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Dieta", b =>
