@@ -6,13 +6,13 @@ public class Cliente
     public string Apellido { get; set; }
     public string Email { get; set; }
     public string Telefono { get; set; }
-    public DateTime FechaRegistro { get; set; } = DateTime.Now; // Fecha y hora actual
+    public DateTime FechaRegistro { get; set; } = DateTime.Now;
 
-    // Relación con otras entidades (opcional)
-    public List<Rutina>? Rutinas { get; set; } = new List<Rutina>();
-    public List<Dieta>? Dietas { get; set; } = new List<Dieta>();
-    public List<Progreso>? Progresos { get; set; } = new List<Progreso>();
+    // Relación con Usuario
+    public int UsuarioId { get; set; }
+    public Usuario Usuario { get; set; }
 }
+
 
 
 // Modelo de Rutina

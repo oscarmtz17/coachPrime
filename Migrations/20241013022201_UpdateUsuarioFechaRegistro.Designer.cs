@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -11,9 +12,11 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(TareasContext))]
-    partial class TareasContextModelSnapshot : ModelSnapshot
+    [Migration("20241013022201_UpdateUsuarioFechaRegistro")]
+    partial class UpdateUsuarioFechaRegistro
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -234,7 +237,7 @@ namespace webapi.Migrations
                         {
                             TareaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb410"),
                             CategoriaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb4ef"),
-                            FechaCreacion = new DateTime(2024, 10, 12, 20, 27, 28, 360, DateTimeKind.Local).AddTicks(8136),
+                            FechaCreacion = new DateTime(2024, 10, 12, 20, 22, 1, 758, DateTimeKind.Local).AddTicks(4099),
                             PrioridadTarea = 1,
                             Titulo = "Pago de servicios publicos"
                         },
@@ -242,7 +245,7 @@ namespace webapi.Migrations
                         {
                             TareaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb411"),
                             CategoriaId = new Guid("fe2de405-c38e-4c90-ac52-da0540dfb402"),
-                            FechaCreacion = new DateTime(2024, 10, 12, 20, 27, 28, 360, DateTimeKind.Local).AddTicks(8154),
+                            FechaCreacion = new DateTime(2024, 10, 12, 20, 22, 1, 758, DateTimeKind.Local).AddTicks(4112),
                             PrioridadTarea = 0,
                             Titulo = "Terminar de ver pelicula en netflix"
                         });
@@ -251,7 +254,7 @@ namespace webapi.Migrations
             modelBuilder.Entity("Cliente", b =>
                 {
                     b.HasOne("Usuario", "Usuario")
-                        .WithMany()
+                        .WithMany("Clientes")
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -301,6 +304,11 @@ namespace webapi.Migrations
                         .IsRequired();
 
                     b.Navigation("Categoria");
+                });
+
+            modelBuilder.Entity("Usuario", b =>
+                {
+                    b.Navigation("Clientes");
                 });
 
             modelBuilder.Entity("webapi.Models.Categoria", b =>

@@ -11,6 +11,7 @@ public class TareasContext: DbContext
     public TareasContext(DbContextOptions<TareasContext> options) :base(options) { }
 
      public DbSet<Cliente> Clientes { get; set; }
+    public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Rutina> Rutinas { get; set; }
     public DbSet<Dieta> Dietas { get; set; }
     public DbSet<Progreso> Progresos { get; set; }

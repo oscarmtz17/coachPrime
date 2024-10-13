@@ -15,6 +15,7 @@ builder.Services.AddScoped <IHelloWorldService>(p => new HelloWorldService());
 // builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 // builder.Services.AddScoped<ITareasService, TareasService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
 
 var app = builder.Build();
