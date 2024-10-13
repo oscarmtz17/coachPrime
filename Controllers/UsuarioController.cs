@@ -30,17 +30,26 @@ public class UsuarioController : ControllerBase
         return BadRequest(ModelState);
     }
 
+    //Actualizar un Usuario existente
+
     [HttpPut("{id}")]
-    public IActionResult Put(int id, [FromBody] Usuario usuario)
+    public async Task<IActionResult> Put(int id, [FromBody] Usuario usuario)
     {
-        usuarioService.Update(id, usuario);
+        if (ModelState.IsValid)
+        {
+        await usuarioService.Update(id, usuario);
         return Ok();
+
+        }
+
+        return BadRequest(ModelState);
     }
 
+//Eliminar un usuario
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        usuarioService.Delete(id);
+        await usuarioService.Delete(id);
         return Ok("Usuario Eliminado");
     }
 }

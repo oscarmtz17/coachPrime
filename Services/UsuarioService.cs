@@ -20,10 +20,10 @@ public class UsuarioService : IUsuarioService
     context.Usuarios.Add(usuario);
     await context.SaveChangesAsync();
 }
-
+// Actualizar un Usuario existente
     public async Task Update(int id, Usuario usuario)
     {
-        var usuarioActual = context.Usuarios.Find(id);
+        var usuarioActual = await context.Usuarios.FindAsync(id);
         if (usuarioActual != null)
         {
             usuarioActual.Nombre = usuario.Nombre;
@@ -34,9 +34,10 @@ public class UsuarioService : IUsuarioService
         }
     }
 
+//Eliminar un Usuario
     public async Task Delete(int id)
     {
-        var usuarioActual = context.Usuarios.Find(id);
+        var usuarioActual = await context.Usuarios.FindAsync(id);
         if (usuarioActual != null)
         {
             context.Remove(usuarioActual);
