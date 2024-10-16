@@ -13,8 +13,11 @@ public class TareasContext: DbContext
      public DbSet<Cliente> Clientes { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Rutina> Rutinas { get; set; }
-    public DbSet<Dieta> Dietas { get; set; }
-    public DbSet<Progreso> Progresos { get; set; }
+    public DbSet<Agrupacion> Agrupaciones { get; set; }
+    public DbSet<DiaEntrenamiento> DiasEntrenamiento { get; set; }
+    public DbSet<EjercicioAgrupado> EjercicioAgrupado { get; set; }
+    public DbSet<Ejercicio> Ejercicios { get; set; }
+
     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -63,6 +66,7 @@ public class TareasContext: DbContext
             tarea.HasData(tareasInit);
 
         });
+        
 
     }
 
