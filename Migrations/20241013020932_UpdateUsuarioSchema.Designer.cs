@@ -11,7 +11,7 @@ using webapi;
 
 namespace webapi.Migrations
 {
-    [DbContext(typeof(TareasContext))]
+    [DbContext(typeof(CoachPrimeContext))]
     [Migration("20241013020932_UpdateUsuarioSchema")]
     partial class UpdateUsuarioSchema
     {

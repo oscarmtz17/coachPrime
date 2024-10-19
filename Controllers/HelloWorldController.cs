@@ -9,11 +9,11 @@ public class HelloWorldController : ControllerBase
 {
     IHelloWorldService helloWorldService;
 
-    TareasContext dbcontext;
+    CoachPrimeContext dbcontext;
 
     private readonly ILogger<HelloWorldController> _logger;
 
-    public HelloWorldController(ILogger<HelloWorldController> logger, IHelloWorldService helloWorld, TareasContext db)
+    public HelloWorldController(ILogger<HelloWorldController> logger, IHelloWorldService helloWorld, CoachPrimeContext db)
     {
         _logger = logger;
         helloWorldService = helloWorld;

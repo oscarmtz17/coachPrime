@@ -4,9 +4,9 @@ namespace webapi.Services;
 
 public class CategoriaService : ICategoriaService
 {
-    TareasContext context;
+    CoachPrimeContext context;
 
-    public CategoriaService(TareasContext dbcontext)
+    public CategoriaService(CoachPrimeContext dbcontext)
     {
         context = dbcontext;
     }

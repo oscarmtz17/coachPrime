@@ -10,7 +10,7 @@ using webapi;
 
 namespace webapi.Migrations
 {
-    [DbContext(typeof(TareasContext))]
+    [DbContext(typeof(CoachPrimeContext))]
     partial class TareasContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

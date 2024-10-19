@@ -3,12 +3,12 @@ using webapi.Models;
 
 namespace webapi;
 
-public class TareasContext: DbContext
+public class CoachPrimeContext: DbContext
 {
     public DbSet<Categoria> Categorias {get;set;}
     public DbSet<Tarea> Tareas {get;set;}
 
-    public TareasContext(DbContextOptions<TareasContext> options) :base(options) { }
+    public CoachPrimeContext(DbContextOptions<CoachPrimeContext> options) :base(options) { }
 
      public DbSet<Cliente> Clientes { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }

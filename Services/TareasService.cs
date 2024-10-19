@@ -4,9 +4,9 @@ namespace webapi.Services;
 
 public class TareasService : ITareasService
 {
-    TareasContext context;
+    CoachPrimeContext context;
 
-    public TareasService(TareasContext dbcontext)
+    public TareasService(CoachPrimeContext dbcontext)
     {
         context = dbcontext;
     }

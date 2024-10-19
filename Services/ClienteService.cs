@@ -4,9 +4,9 @@ namespace webapi.Services;
 
 public class ClienteService : IClienteService
 {
-    private readonly TareasContext context;
+    private readonly CoachPrimeContext context;
 
-    public ClienteService(TareasContext dbcontext)
+    public ClienteService(CoachPrimeContext dbcontext)
     {
         context = dbcontext;
     }

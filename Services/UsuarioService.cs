@@ -2,9 +2,9 @@ namespace webapi.Services;
 
 public class UsuarioService : IUsuarioService
 {
-    private readonly TareasContext context;
+    private readonly CoachPrimeContext context;
 
-    public UsuarioService(TareasContext dbcontext)
+    public UsuarioService(CoachPrimeContext dbcontext)
     {
         context = dbcontext;
     }

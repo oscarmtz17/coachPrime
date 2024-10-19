@@ -3,9 +3,9 @@ namespace webapi.Services;
 
 public class RutinaService : IRutinaService
 {
-    private readonly TareasContext _context;
+    private readonly CoachPrimeContext _context;
 
-    public RutinaService(TareasContext context)
+    public RutinaService(CoachPrimeContext context)
     {
         _context = context;
     }
