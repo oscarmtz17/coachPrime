@@ -13,6 +13,9 @@ builder.Services.AddSqlServer<CoachPrimeContext>("Data Source=LAPTOP-NTB0BH1O\\M
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRutinaService, RutinaService>();
+// Registra el servicio de progreso
+builder.Services.AddScoped<IProgresoService, ProgresoService>();
+
 builder.Services.AddControllers()
     .AddJsonOptions(x =>
     {

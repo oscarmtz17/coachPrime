@@ -8,4 +8,7 @@ public class Usuario
 
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
 
+    // Propiedad de navegación para la relación con Clientes
+    public ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
+
 }

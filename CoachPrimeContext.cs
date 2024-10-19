@@ -15,9 +15,17 @@ public class CoachPrimeContext: DbContext
     public DbSet<DiaEntrenamiento> DiasEntrenamiento { get; set; }
     public DbSet<EjercicioAgrupado> EjercicioAgrupado { get; set; }
     public DbSet<Ejercicio> Ejercicios { get; set; }
+    public DbSet<Progreso> Progresos { get; set; }
 
     
-
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Cliente>()
+        .HasOne(c => c.Usuario)
+        .WithMany(u => u.Clientes)
+        .HasForeignKey(c => c.UsuarioId)
+        .OnDelete(DeleteBehavior.NoAction);  // Cambiamos a NO ACTION
+}
     // protected override void OnModelCreating(ModelBuilder modelBuilder)
     // {
     //     List<Categoria> categoriasInit = new List<Categoria>();
