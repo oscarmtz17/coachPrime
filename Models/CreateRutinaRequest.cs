@@ -26,4 +26,5 @@ public class EjercicioRequest
     public string Nombre { get; set; }
     public int Series { get; set; }
     public int Repeticiones { get; set; }
+    public string ImagenUrl { get; set; }
 }

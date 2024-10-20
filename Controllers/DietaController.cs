@@ -1,15 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
-
+using webapi.Services;
 
 [ApiController]
 [Route("api/[controller]")]
 public class DietaController : ControllerBase
 {
     private readonly IDietaService _dietaService;
+    private readonly PdfService _pdfService;
 
-    public DietaController(IDietaService dietaService)
+     public DietaController(IDietaService dietaService, PdfService pdfService)
     {
         _dietaService = dietaService;
+        _pdfService = pdfService;
+    }
+
+        // Endpoint para descargar el PDF de una dieta
+    [HttpGet("{clienteId}/{dietaId}/pdf")]
+    public async Task<IActionResult> DescargarDietaPdf(int clienteId, int dietaId)
+    {
+        var dieta = await _dietaService.GetDietaByIdAsync(clienteId, dietaId);
+
+        if (dieta == null)
+        {
+            return NotFound("Dieta no encontrada.");
+        }
+
+        var pdfBytes = _pdfService.GenerarDietaPdf(dieta);
+        return File(pdfBytes, "application/pdf", $"Dieta_{dieta.Nombre}.pdf");
     }
 
     // GET: api/dieta/{clienteId} - Obtener todas las dietas de un cliente

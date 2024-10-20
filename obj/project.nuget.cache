@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ol+1MifEQ9bvowgztmA9i5uL2sS3VhXsa0aOzTwb1oxPkrTDoCV7Km+F+Ppw5cl2NBTg/B+EfcjEmF+vmT+dCw==",
+  "dgSpecHash": "4soo+m4Os0hDEU5l3XADtoNg3nJZAPHT5Ak5HYpsND7+wJRACS3MsL0S2e9onf+xV99JfoPBJ02NFC5Yv52miA==",
   "success": true,
   "projectFilePath": "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\webapi.csproj",
   "expectedPackageFiles": [
@@ -45,6 +45,10 @@
     "C:\\Users\\oscar\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
     "C:\\Users\\oscar\\.nuget\\packages\\microsoft.win32.systemevents\\5.0.0\\microsoft.win32.systemevents.5.0.0.nupkg.sha512",
     "C:\\Users\\oscar\\.nuget\\packages\\mono.texttemplating\\2.2.1\\mono.texttemplating.2.2.1.nupkg.sha512",
+    "C:\\Users\\oscar\\.nuget\\packages\\pdfsharpcore\\1.3.65\\pdfsharpcore.1.3.65.nupkg.sha512",
+    "C:\\Users\\oscar\\.nuget\\packages\\sharpziplib\\1.4.2\\sharpziplib.1.4.2.nupkg.sha512",
+    "C:\\Users\\oscar\\.nuget\\packages\\sixlabors.fonts\\1.0.0-beta17\\sixlabors.fonts.1.0.0-beta17.nupkg.sha512",
+    "C:\\Users\\oscar\\.nuget\\packages\\sixlabors.imagesharp\\1.0.4\\sixlabors.imagesharp.1.0.4.nupkg.sha512",
     "C:\\Users\\oscar\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
     "C:\\Users\\oscar\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.4.0\\swashbuckle.aspnetcore.swagger.6.4.0.nupkg.sha512",
     "C:\\Users\\oscar\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.4.0\\swashbuckle.aspnetcore.swaggergen.6.4.0.nupkg.sha512",

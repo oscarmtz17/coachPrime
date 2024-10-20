@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-// using webapi.Models;  // Asegúrate de que los DTOs están en este namespace
 using webapi.Services;
 using System.Threading.Tasks;
 
@@ -10,10 +9,27 @@ namespace webapi.Controllers
     public class RutinaController : ControllerBase
     {
         private readonly IRutinaService _rutinaService;
+        private readonly PdfService _pdfService;
 
-        public RutinaController(IRutinaService rutinaService)
+        public RutinaController(IRutinaService rutinaService, PdfService pdfService)
         {
             _rutinaService = rutinaService;
+            _pdfService = pdfService;
+        }
+
+        // Endpoint para descargar el PDF de una rutina
+        [HttpGet("{clienteId}/{rutinaId}/pdf")]
+        public async Task<IActionResult> DescargarRutinaPdf(int clienteId, int rutinaId)
+        {
+            var rutina = await _rutinaService.GetRutinaByIdAsync(clienteId, rutinaId);
+
+            if (rutina == null)
+            {
+                return NotFound("Rutina no encontrada.");
+            }
+
+            var pdfBytes = _pdfService.GenerarRutinaPdf(rutina);
+            return File(pdfBytes, "application/pdf", $"Rutina_{rutina.Nombre}.pdf");
         }
 
         // POST: api/rutina
@@ -43,8 +59,8 @@ namespace webapi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRutinaById(int id)
         {
-            var rutina = await _rutinaService.GetRutinaByIdAsync(id);
-            
+            var rutina = await _rutinaService.GetRutinaByIdAsync(id); // Ajustado a usar 1 parámetro
+
             if (rutina != null)
             {
                 return Ok(rutina);

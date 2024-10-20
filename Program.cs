@@ -16,6 +16,7 @@ builder.Services.AddScoped<IRutinaService, RutinaService>();
 // Registra el servicio de progreso
 builder.Services.AddScoped<IProgresoService, ProgresoService>();
 builder.Services.AddScoped<IDietaService, DietaService>();
+builder.Services.AddScoped<PdfService>();
 
 
 builder.Services.AddControllers()

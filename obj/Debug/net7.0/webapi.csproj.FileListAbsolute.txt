@@ -147,3 +147,8 @@ D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\Microsof
 D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\Microsoft.Extensions.DependencyModel.dll
 D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\Mono.TextTemplating.dll
 D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\System.CodeDom.dll
+D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\PdfSharpCore.dll
+D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\ICSharpCode.SharpZipLib.dll
+D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\SixLabors.Fonts.dll
+D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\SixLabors.ImageSharp.dll
+D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\de\PdfSharpCore.resources.dll
