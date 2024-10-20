@@ -1,5 +1,6 @@
 using PdfSharpCore.Drawing;
 using PdfSharpCore.Pdf;
+using System.Globalization;
 using System.Net;
 
 namespace webapi.Services
@@ -7,7 +8,6 @@ namespace webapi.Services
     public class PdfService
     {
         // Método para generar PDF de una Dieta
- // Método para generar PDF de la dieta
         public byte[] GenerarDietaPdf(Dieta dieta)
         {
             PdfDocument document = new PdfDocument();
@@ -47,7 +47,8 @@ namespace webapi.Services
                 // Alimentos de cada comida
                 foreach (var alimento in comida.Alimentos)
                 {
-                    gfx.DrawString($"{alimento.Nombre} - {alimento.Cantidad} {alimento.Unidad}", foodItemFont, XBrushes.Black, new XRect(marginLeft + 20, currentY, page.Width - marginRight, 20), XStringFormats.TopLeft);
+                    gfx.DrawString($"{alimento.Nombre} - {(alimento.Cantidad == 0.5 ? "1/2" : alimento.Cantidad.ToString(CultureInfo.InvariantCulture))} {alimento.Unidad}", foodItemFont, XBrushes.Black, new XRect(marginLeft + 20, currentY, page.Width - marginRight, 20), XStringFormats.TopLeft);
+
                     currentY += 20;
                 }
 
@@ -84,7 +85,7 @@ namespace webapi.Services
             }
         }
 
-        // Método para generar PDF de la rutina (mencionado previamente)
+        
 
     
 
