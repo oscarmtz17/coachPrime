@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -11,9 +12,11 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(CoachPrimeContext))]
-    partial class TareasContextModelSnapshot : ModelSnapshot
+    [Migration("20241019214333_DietasModel")]
+    partial class DietasModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,35 +45,6 @@ namespace webapi.Migrations
                     b.HasIndex("DiaEntrenamientoId");
 
                     b.ToTable("Agrupaciones");
-                });
-
-            modelBuilder.Entity("Alimento", b =>
-                {
-                    b.Property<int>("AlimentoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlimentoId"));
-
-                    b.Property<double>("Cantidad")
-                        .HasColumnType("float");
-
-                    b.Property<int>("ComidaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Unidad")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AlimentoId");
-
-                    b.HasIndex("ComidaId");
-
-                    b.ToTable("Alimentos");
                 });
 
             modelBuilder.Entity("Cliente", b =>
@@ -116,32 +90,6 @@ namespace webapi.Migrations
                     b.ToTable("Clientes");
                 });
 
-            modelBuilder.Entity("Comida", b =>
-                {
-                    b.Property<int>("ComidaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ComidaId"));
-
-                    b.Property<int>("DietaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Hora")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ComidaId");
-
-                    b.HasIndex("DietaId");
-
-                    b.ToTable("Comidas");
-                });
-
             modelBuilder.Entity("DiaEntrenamiento", b =>
                 {
                     b.Property<int>("DiaEntrenamientoId")
@@ -162,35 +110,6 @@ namespace webapi.Migrations
                     b.HasIndex("RutinaId");
 
                     b.ToTable("DiasEntrenamiento");
-                });
-
-            modelBuilder.Entity("Dieta", b =>
-                {
-                    b.Property<int>("DietaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DietaId"));
-
-                    b.Property<int>("ClienteId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaAsignacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Notas")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("DietaId");
-
-                    b.HasIndex("ClienteId");
-
-                    b.ToTable("Dietas");
                 });
 
             modelBuilder.Entity("Ejercicio", b =>
@@ -385,17 +304,6 @@ namespace webapi.Migrations
                     b.Navigation("DiaEntrenamiento");
                 });
 
-            modelBuilder.Entity("Alimento", b =>
-                {
-                    b.HasOne("Comida", "Comida")
-                        .WithMany("Alimentos")
-                        .HasForeignKey("ComidaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Comida");
-                });
-
             modelBuilder.Entity("Cliente", b =>
                 {
                     b.HasOne("Usuario", "Usuario")
@@ -407,17 +315,6 @@ namespace webapi.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("Comida", b =>
-                {
-                    b.HasOne("Dieta", "Dieta")
-                        .WithMany("Comidas")
-                        .HasForeignKey("DietaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Dieta");
-                });
-
             modelBuilder.Entity("DiaEntrenamiento", b =>
                 {
                     b.HasOne("Rutina", "Rutina")
@@ -427,17 +324,6 @@ namespace webapi.Migrations
                         .IsRequired();
 
                     b.Navigation("Rutina");
-                });
-
-            modelBuilder.Entity("Dieta", b =>
-                {
-                    b.HasOne("Cliente", "Cliente")
-                        .WithMany("Dietas")
-                        .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("EjercicioAgrupado", b =>
@@ -496,26 +382,14 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("Cliente", b =>
                 {
-                    b.Navigation("Dietas");
-
                     b.Navigation("Progresos");
 
                     b.Navigation("Rutinas");
                 });
 
-            modelBuilder.Entity("Comida", b =>
-                {
-                    b.Navigation("Alimentos");
-                });
-
             modelBuilder.Entity("DiaEntrenamiento", b =>
                 {
                     b.Navigation("Agrupaciones");
-                });
-
-            modelBuilder.Entity("Dieta", b =>
-                {
-                    b.Navigation("Comidas");
                 });
 
             modelBuilder.Entity("Rutina", b =>

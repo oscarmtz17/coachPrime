@@ -1,14 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-// using webapi.Models;
 
 namespace webapi;
 
 public class CoachPrimeContext: DbContext
 {
-
     public CoachPrimeContext(DbContextOptions<CoachPrimeContext> options) :base(options) { }
 
-     public DbSet<Cliente> Clientes { get; set; }
+    public DbSet<Cliente> Clientes { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Rutina> Rutinas { get; set; }
     public DbSet<Agrupacion> Agrupaciones { get; set; }
@@ -17,63 +15,39 @@ public class CoachPrimeContext: DbContext
     public DbSet<Ejercicio> Ejercicios { get; set; }
     public DbSet<Progreso> Progresos { get; set; }
 
-    
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    modelBuilder.Entity<Cliente>()
-        .HasOne(c => c.Usuario)
-        .WithMany(u => u.Clientes)
-        .HasForeignKey(c => c.UsuarioId)
-        .OnDelete(DeleteBehavior.NoAction);  // Cambiamos a NO ACTION
-}
-    // protected override void OnModelCreating(ModelBuilder modelBuilder)
-    // {
-    //     List<Categoria> categoriasInit = new List<Categoria>();
-    //     categoriasInit.Add(new Categoria() { CategoriaId = Guid.Parse("fe2de405-c38e-4c90-ac52-da0540dfb4ef"), Nombre = "Actividades pendientes", Peso = 20});
-    //     categoriasInit.Add(new Categoria() { CategoriaId = Guid.Parse("fe2de405-c38e-4c90-ac52-da0540dfb402"), Nombre = "Actividades personales", Peso = 50});
+    // Nuevas tablas para las dietas
+    public DbSet<Dieta> Dietas { get; set; }
+    public DbSet<Comida> Comidas { get; set; }
+    public DbSet<Alimento> Alimentos { get; set; }
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Relación Cliente - Usuario
+        modelBuilder.Entity<Cliente>()
+            .HasOne(c => c.Usuario)
+            .WithMany(u => u.Clientes)
+            .HasForeignKey(c => c.UsuarioId)
+            .OnDelete(DeleteBehavior.NoAction);  // Cambiamos a NO ACTION
 
-    //     modelBuilder.Entity<Categoria>(categoria=> 
-    //     {
-    //         categoria.ToTable("Categoria");
-    //         categoria.HasKey(p=> p.CategoriaId);
+        // Relación Dieta - Cliente
+        modelBuilder.Entity<Dieta>()
+            .HasOne(d => d.Cliente)
+            .WithMany(c => c.Dietas)
+            .HasForeignKey(d => d.ClienteId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-    //         categoria.Property(p=> p.Nombre).IsRequired().HasMaxLength(150);
+        // Relación Comida - Dieta
+        modelBuilder.Entity<Comida>()
+            .HasOne(c => c.Dieta)
+            .WithMany(d => d.Comidas)
+            .HasForeignKey(c => c.DietaId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-    //         categoria.Property(p=> p.Descripcion).IsRequired(false);
-
-    //         categoria.Property(p=> p.Peso);
-
-    //         categoria.HasData(categoriasInit);
-    //     });
-
-    //     List<Tarea> tareasInit = new List<Tarea>();
-
-    //     tareasInit.Add(new Tarea() { TareaId = Guid.Parse("fe2de405-c38e-4c90-ac52-da0540dfb410"), CategoriaId = Guid.Parse("fe2de405-c38e-4c90-ac52-da0540dfb4ef"), PrioridadTarea = Prioridad.Media, Titulo = "Pago de servicios publicos", FechaCreacion = DateTime.Now });
-    //     tareasInit.Add(new Tarea() { TareaId = Guid.Parse("fe2de405-c38e-4c90-ac52-da0540dfb411"), CategoriaId = Guid.Parse("fe2de405-c38e-4c90-ac52-da0540dfb402"), PrioridadTarea = Prioridad.Baja, Titulo = "Terminar de ver pelicula en netflix", FechaCreacion = DateTime.Now });
-
-    //     modelBuilder.Entity<Tarea>(tarea=>
-    //     {
-    //         tarea.ToTable("Tarea");
-    //         tarea.HasKey(p=> p.TareaId);
-
-    //         tarea.HasOne(p=> p.Categoria).WithMany(p=> p.Tareas).HasForeignKey(p=> p.CategoriaId);
-
-    //         tarea.Property(p=> p.Titulo).IsRequired().HasMaxLength(200);
-
-    //         tarea.Property(p=> p.Descripcion).IsRequired(false);
-
-    //         tarea.Property(p=> p.PrioridadTarea);
-
-    //         tarea.Property(p=> p.FechaCreacion);
-
-    //         tarea.Ignore(p=> p.Resumen);
-
-    //         tarea.HasData(tareasInit);
-
-    //     });
-        
-
-    // }
-
+        // Relación Alimento - Comida
+        modelBuilder.Entity<Alimento>()
+            .HasOne(a => a.Comida)
+            .WithMany(c => c.Alimentos)
+            .HasForeignKey(a => a.ComidaId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }

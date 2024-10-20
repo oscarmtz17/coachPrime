@@ -15,6 +15,8 @@ public class Cliente
     public required int UsuarioId { get; set; }
     public Usuario Usuario { get; set; }
     
+        // Relación con Dietas
+    public List<Dieta> Dietas { get; set; }  // Relación con Dietas
 
     public List<Rutina> Rutinas { get; set; } = new List<Rutina>();
     public List<Progreso> Progresos { get; set; } = new List<Progreso>();  // Relación con Progresos
