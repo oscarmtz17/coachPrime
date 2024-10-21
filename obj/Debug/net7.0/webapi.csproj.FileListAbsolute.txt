@@ -152,3 +152,4 @@ D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\ICSharpC
 D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\SixLabors.Fonts.dll
 D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\SixLabors.ImageSharp.dll
 D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\de\PdfSharpCore.resources.dll
+D:\oscar\Documents\Proyectos\CoachPrime\backend\webapi\bin\Debug\net7.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 // using webapi.Models;
 using webapi.Services;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace webapi.Controllers;
-
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ClienteController : ControllerBase
