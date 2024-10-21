@@ -41,9 +41,10 @@ namespace webapi.Controllers
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                // new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.UsuarioId.ToString()), // Usa UsuarioId como Sub
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString())
+                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()) // Se asegura que el UsuarioId se use correctamente como NameIdentifier
             };
 
             var token = new JwtSecurityToken(
