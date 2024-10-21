@@ -11,4 +11,7 @@ public class Usuario
     // Propiedad de navegación para la relación con Clientes
     public ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
 
+     // Nueva relación con RefreshTokens
+    public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
 }

@@ -20,6 +20,8 @@ public class CoachPrimeContext: DbContext
     public DbSet<Comida> Comidas { get; set; }
     public DbSet<Alimento> Alimentos { get; set; }
 
+     public DbSet<RefreshToken> RefreshTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Relación Cliente - Usuario
@@ -48,6 +50,13 @@ public class CoachPrimeContext: DbContext
             .HasOne(a => a.Comida)
             .WithMany(c => c.Alimentos)
             .HasForeignKey(a => a.ComidaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        //RefreshToken
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(rt => rt.Usuario)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(rt => rt.UsuarioId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

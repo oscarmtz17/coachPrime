@@ -31,7 +31,37 @@ namespace webapi.Controllers
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new { token });
+            var refreshToken = GenerateRefreshToken();
+
+            // Guarda el refresh token en la base de datos
+            _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
+
+            return Ok(new { token, refreshToken });
+        }
+
+        [HttpPost("refresh")]
+        public IActionResult Refresh([FromBody] TokenRequest tokenRequest)
+        {
+            var principal = GetPrincipalFromExpiredToken(tokenRequest.AccessToken);
+            if (principal == null) return BadRequest("Token inválido.");
+
+            var usuarioId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
+            var savedRefreshToken = _usuarioService.GetRefreshToken(usuarioId); // Obtén el refresh token de la base de datos
+
+            if (savedRefreshToken != tokenRequest.RefreshToken || savedRefreshToken == null || _usuarioService.IsRefreshTokenRevoked(usuarioId))
+            {
+                return Unauthorized("Refresh token inválido.");
+            }
+
+            // Genera nuevo AccessToken y RefreshToken
+            var newJwtToken = GenerateJwtToken(_usuarioService.GetUserById(usuarioId));
+            var newRefreshToken = GenerateRefreshToken();
+
+            // Actualiza el refresh token en la base de datos
+            _usuarioService.RevokeRefreshToken(usuarioId); // Revoca el anterior
+            _usuarioService.SaveRefreshToken(usuarioId, newRefreshToken);
+
+            return Ok(new { token = newJwtToken, refreshToken = newRefreshToken });
         }
 
         private string GenerateJwtToken(Usuario user)
@@ -41,10 +71,9 @@ namespace webapi.Controllers
 
             var claims = new[]
             {
-                // new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Sub, user.UsuarioId.ToString()), // Usa UsuarioId como Sub
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()) // Se asegura que el UsuarioId se use correctamente como NameIdentifier
+                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()) // Usa el UsuarioId como NameIdentifier
             };
 
             var token = new JwtSecurityToken(
@@ -56,5 +85,50 @@ namespace webapi.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
+
+        private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = false, // Ignorar validación de audiencia
+                ValidateIssuer = false, // Ignorar validación de emisor
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"])),
+                ValidateLifetime = false // Ignorar que el token esté expirado
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+                var jwtSecurityToken = securityToken as JwtSecurityToken;
+                if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw new SecurityTokenException("Token inválido.");
+                }
+
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    public class TokenRequest
+    {
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
     }
 }
