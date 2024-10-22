@@ -1,3 +1,5 @@
+using BCrypt.Net;
+
 namespace webapi.Services
 {
     public class UsuarioService : IUsuarioService
@@ -9,23 +11,36 @@ namespace webapi.Services
             context = dbcontext;
         }
 
+        // Validar usuario con contraseña encriptada
         public Usuario ValidateUser(string email, string contraseña)
         {
-            return context.Usuarios.SingleOrDefault(u => u.Email == email && u.Contraseña == contraseña);  // Corregido
+            var usuario = context.Usuarios.SingleOrDefault(u => u.Email == email);
+
+            // Si el usuario existe, verificar la contraseña encriptada
+            if (usuario != null && BCrypt.Net.BCrypt.Verify(contraseña, usuario.Contraseña))
+            {
+                return usuario;
+            }
+
+            return null; // Devuelve null si el usuario no es válido
         }
 
+        // Obtener todos los usuarios
         public IEnumerable<Usuario> Get()
         {
             return context.Usuarios;
         }
 
+        // Guardar un nuevo usuario con la contraseña encriptada
         public async Task Save(Usuario usuario)
         {
+            usuario.Contraseña = BCrypt.Net.BCrypt.HashPassword(usuario.Contraseña); // Encripta la contraseña
             usuario.FechaRegistro = DateTime.Now;
             context.Usuarios.Add(usuario);
             await context.SaveChangesAsync();
         }
 
+        // Actualizar un usuario existente con la posibilidad de encriptar la nueva contraseña
         public async Task Update(int id, Usuario usuario)
         {
             var usuarioActual = await context.Usuarios.FindAsync(id);
@@ -33,12 +48,18 @@ namespace webapi.Services
             {
                 usuarioActual.Nombre = usuario.Nombre;
                 usuarioActual.Email = usuario.Email;
-                usuarioActual.Contraseña = usuario.Contraseña;
+                
+                // Si la contraseña fue modificada, se encripta de nuevo
+                if (!BCrypt.Net.BCrypt.Verify(usuario.Contraseña, usuarioActual.Contraseña))
+                {
+                    usuarioActual.Contraseña = BCrypt.Net.BCrypt.HashPassword(usuario.Contraseña);
+                }
 
                 await context.SaveChangesAsync();
             }
         }
 
+        // Eliminar un usuario
         public async Task Delete(int id)
         {
             var usuarioActual = await context.Usuarios.FindAsync(id);
@@ -50,7 +71,6 @@ namespace webapi.Services
         }
 
         // Implementación de manejo de Refresh Tokens
-
         public void SaveRefreshToken(int usuarioId, string refreshToken)
         {
             var usuario = context.Usuarios.Find(usuarioId);
