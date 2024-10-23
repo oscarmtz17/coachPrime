@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace webapi.Controllers;
 
-// [Authorize]
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ClienteController : ControllerBase

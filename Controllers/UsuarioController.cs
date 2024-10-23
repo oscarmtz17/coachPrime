@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using webapi.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace webapi.Controllers;
 
 [Route("api/[controller]")]
@@ -12,6 +14,7 @@ public class UsuarioController : ControllerBase
         usuarioService = service;
     }
 
+[Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult Get()
     {

@@ -14,4 +14,6 @@ public class Usuario
      // Nueva relación con RefreshTokens
     public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
+    public string Rol { get; set; }  // Nuevo campo para roles
+
 }

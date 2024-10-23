@@ -73,17 +73,18 @@ namespace webapi.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UsuarioId.ToString()), // Usa UsuarioId como Sub
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()) // Usa el UsuarioId como NameIdentifier
+                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()), // Usa el UsuarioId como NameIdentifier
+                new Claim(ClaimTypes.Role, user.Rol)  // Agregar el rol del usuario como claim
             };
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: credentials);
+             var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddHours(1),
+            signingCredentials: credentials);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+        return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         private string GenerateRefreshToken()
