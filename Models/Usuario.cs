@@ -14,6 +14,10 @@ public class Usuario
      // Nueva relación con RefreshTokens
     public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
+     // Nuevos campos para recuperación de contraseña
+    public string? PasswordResetToken { get; set; } // Campo para almacenar el token de recuperación
+    public DateTime? TokenExpirationDate { get; set; } // Fecha de expiración del token de recuperación
+
     public string Rol { get; set; }  // Nuevo campo para roles
 
 }
