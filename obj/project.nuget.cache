@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "lGD4VNrxV9zVygNvjwiODlYr6G87Y7xXmy0XO4ygmXO05aY3yeFjaFViiTQopDk8feSujfQefHTK2n0JCA2jZA==",
+  "dgSpecHash": "JotX5j5nbICy86XxkfXPEr4/SM9uWM9DdP+7ztIUVLI9BR0CjiuF+xq5lggK16AqbbZE3YgvH6Xs3iLfRoXNzw==",
   "success": true,
-  "projectFilePath": "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\webapi.csproj",
+  "projectFilePath": "C:\\CoachPrime\\backend\\webapi\\webapi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\oscar\\.nuget\\packages\\azure.core\\1.24.0\\azure.core.1.24.0.nupkg.sha512",
     "C:\\Users\\oscar\\.nuget\\packages\\azure.identity\\1.6.0\\azure.identity.1.6.0.nupkg.sha512",

@@ -24,16 +24,20 @@ namespace webapi.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest loginRequest)
         {
-            var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Contraseña);
+            var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
             if (user == null)
             {
                 return Unauthorized("Credenciales incorrectas");
             }
 
+            if (!user.EmailVerificado)
+            {
+                return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+            }
+
             var token = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
 
-            // Guarda el refresh token en la base de datos
             _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
 
             return Ok(new { token, refreshToken });
@@ -46,19 +50,17 @@ namespace webapi.Controllers
             if (principal == null) return BadRequest("Token inválido.");
 
             var usuarioId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
-            var savedRefreshToken = _usuarioService.GetRefreshToken(usuarioId); // Obtén el refresh token de la base de datos
+            var savedRefreshToken = _usuarioService.GetRefreshToken(usuarioId);
 
             if (savedRefreshToken != tokenRequest.RefreshToken || savedRefreshToken == null || _usuarioService.IsRefreshTokenRevoked(usuarioId))
             {
                 return Unauthorized("Refresh token inválido.");
             }
 
-            // Genera nuevo AccessToken y RefreshToken
             var newJwtToken = GenerateJwtToken(_usuarioService.GetUserById(usuarioId));
             var newRefreshToken = GenerateRefreshToken();
 
-            // Actualiza el refresh token en la base de datos
-            _usuarioService.RevokeRefreshToken(usuarioId); // Revoca el anterior
+            _usuarioService.RevokeRefreshToken(usuarioId);
             _usuarioService.SaveRefreshToken(usuarioId, newRefreshToken);
 
             return Ok(new { token = newJwtToken, refreshToken = newRefreshToken });
@@ -73,44 +75,87 @@ namespace webapi.Controllers
                 return NotFound("El usuario con el correo proporcionado no fue encontrado.");
             }
 
-            // Generar el token de recuperación
             var resetToken = GenerateResetToken();
-
-            // Guardar el token en la base de datos o en un campo de usuario
             _usuarioService.SavePasswordResetToken(user.UsuarioId, resetToken);
-
-            // Enviar el token al correo electrónico
             SendPasswordResetEmail(user.Email, resetToken);
 
             return Ok(new { message = "Se ha enviado un enlace de recuperación de contraseña a su correo electrónico.", token = resetToken });
         }
 
-[HttpPost("reset-password")]
-public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
+        [HttpPost("reset-password")]
+        public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            var user = _usuarioService.GetUserByPasswordResetToken(request.Token);
+            if (user == null || user.TokenExpirationDate < DateTime.Now)
+            {
+                return BadRequest("El token de recuperación es inválido o ha expirado.");
+            }
+
+            if (!_usuarioService.IsPasswordSecure(request.NewPassword))
+            {
+                return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad.");
+            }
+
+            _usuarioService.UpdatePassword(user.UsuarioId, request.NewPassword);
+            return Ok("Su contraseña ha sido actualizada exitosamente.");
+        }
+
+[HttpPost("verify-email")]
+public IActionResult VerifyEmail([FromBody] VerifyEmailRequest request)
 {
-    var user = _usuarioService.GetUserByPasswordResetToken(request.Token);
-    if (user == null || user.TokenExpirationDate < DateTime.Now)
+    var user = _usuarioService.GetUserByVerificationToken(request.Token);
+    if (user == null)
     {
-        return BadRequest("El token de recuperación es inválido o ha expirado.");
+        return BadRequest("Token inválido.");
     }
 
-    // Validar la seguridad de la nueva contraseña
-    if (!_usuarioService.IsPasswordSecure(request.NewPassword))
-    {
-        return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad. Debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial.");
-    }
+    user.EmailVerificado = true;
+    user.EmailVerificationToken = null; // Limpiamos el token tras la verificación
+    _usuarioService.Update(user.UsuarioId, user);
 
-    // Restablecer la contraseña del usuario usando un método específico
-    try
-    {
-        _usuarioService.UpdatePassword(user.UsuarioId, request.NewPassword);  // Usar el método específico para actualizar la contraseña
-        return Ok("Su contraseña ha sido actualizada exitosamente.");
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, "Ocurrió un error al actualizar la contraseña.");
-    }
+    return Ok("Correo verificado exitosamente.");
 }
+
+
+      [HttpPost("register")]
+public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+{
+    var userExists = _usuarioService.GetUserByEmail(request.Email);
+    if (userExists != null)
+    {
+        return BadRequest("El correo ya está registrado.");
+    }
+
+    // Crear nuevo usuario
+    var newUser = new Usuario
+    {
+        Nombre = request.Nombre,
+        Email = request.Email,
+        Password = _usuarioService.HashPassword(request.Password),
+         Rol = "Usuario", // Asignamos un rol predeterminado
+        EmailVerificationToken = GenerateVerificationToken(),
+        EmailVerificado = false // El correo no está verificado al principio
+    };
+
+    await _usuarioService.Save(newUser);
+
+    // Enviar correo de verificación
+    SendVerificationEmail(newUser.Email, newUser.EmailVerificationToken);
+
+    return Ok("Usuario registrado exitosamente. Por favor, verifique su correo electrónico.");
+}
+
+
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
 
 
         private string GenerateJwtToken(Usuario user)
@@ -120,10 +165,10 @@ public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UsuarioId.ToString()), // Usa UsuarioId como Sub
+                new Claim(JwtRegisteredClaimNames.Sub, user.UsuarioId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()), // Usa el UsuarioId como NameIdentifier
-                new Claim(ClaimTypes.Role, user.Rol)  // Agregar el rol del usuario como claim
+                new Claim(ClaimTypes.NameIdentifier, user.UsuarioId.ToString()),
+                new Claim(ClaimTypes.Role, user.Rol)
             };
 
             var token = new JwtSecurityToken(
@@ -146,7 +191,7 @@ public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
             }
         }
 
-        private string GenerateRefreshToken()
+        private string GenerateVerificationToken()
         {
             var randomNumber = new byte[32];
             using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
@@ -160,39 +205,28 @@ public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
         {
             var tokenValidationParameters = new TokenValidationParameters
             {
-                ValidateAudience = false, // Ignorar validación de audiencia
-                ValidateIssuer = false, // Ignorar validación de emisor
+                ValidateAudience = false,
+                ValidateIssuer = false,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"])),
-                ValidateLifetime = false // Ignorar que el token esté expirado
+                ValidateLifetime = false
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            try
-            {
-                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-                var jwtSecurityToken = securityToken as JwtSecurityToken;
-                if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    throw new SecurityTokenException("Token inválido.");
-                }
-
-                return principal;
-            }
-            catch
-            {
-                return null;
-            }
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+            return principal;
         }
 
         private void SendPasswordResetEmail(string email, string resetToken)
         {
-            // Aquí se puede integrar un servicio de envío de correos electrónicos (SendGrid, SMTP, etc.)
             var resetLink = $"https://tudominio.com/reset-password?token={resetToken}";
             var message = $"Use el siguiente enlace para restablecer su contraseña: {resetLink}";
-            
-            // Lógica para enviar el correo electrónico
-            // emailService.SendEmail(email, "Recuperación de contraseña", message);
+        }
+
+        private void SendVerificationEmail(string email, string verificationToken)
+        {
+            var verificationLink = $"https://tudominio.com/verify-email?token={verificationToken}";
+            var message = $"Haga clic en el siguiente enlace para verificar su correo electrónico: {verificationLink}";
         }
     }
 
@@ -211,5 +245,17 @@ public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
     {
         public string Token { get; set; }
         public string NewPassword { get; set; }
+    }
+
+    public class VerifyEmailRequest
+    {
+        public string Token { get; set; }
+    }
+
+    public class RegisterRequest
+    {
+        public string Nombre { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }

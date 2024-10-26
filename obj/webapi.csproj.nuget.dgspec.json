@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\webapi.csproj": {}
+    "C:\\CoachPrime\\backend\\webapi\\webapi.csproj": {}
   },
   "projects": {
-    "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\webapi.csproj": {
+    "C:\\CoachPrime\\backend\\webapi\\webapi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\webapi.csproj",
+        "projectUniqueName": "C:\\CoachPrime\\backend\\webapi\\webapi.csproj",
         "projectName": "webapi",
-        "projectPath": "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\webapi.csproj",
+        "projectPath": "C:\\CoachPrime\\backend\\webapi\\webapi.csproj",
         "packagesPath": "C:\\Users\\oscar\\.nuget\\packages\\",
-        "outputPath": "D:\\oscar\\Documents\\Proyectos\\CoachPrime\\backend\\webapi\\obj\\",
+        "outputPath": "C:\\CoachPrime\\backend\\webapi\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\oscar\\AppData\\Roaming\\NuGet\\NuGet.Config",

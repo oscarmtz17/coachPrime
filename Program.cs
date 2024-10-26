@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 using System.Text;
+using Microsoft.AspNetCore.Cors; // Importa el paquete
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,8 +49,21 @@ builder.Services.AddControllers()
         x.JsonSerializerOptions.WriteIndented = true; // Para formatear la salida de manera más legible
     });
 
+    // Configurar CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        builder => builder
+            .WithOrigins("http://localhost:3000") // Reemplaza esto por la URL de tu frontend
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+});
+
 
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -57,6 +72,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
 // Habilitar autenticación
 app.UseAuthentication();

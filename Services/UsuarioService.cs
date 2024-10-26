@@ -18,7 +18,7 @@ namespace webapi.Services
             var usuario = context.Usuarios.SingleOrDefault(u => u.Email == email);
 
             // Si el usuario existe, verificar la contraseña encriptada
-            if (usuario != null && BCrypt.Net.BCrypt.Verify(contraseña, usuario.Contraseña))
+            if (usuario != null && BCrypt.Net.BCrypt.Verify(contraseña, usuario.Password))
             {
                 return usuario;
             }
@@ -36,13 +36,13 @@ namespace webapi.Services
         public async Task Save(Usuario usuario)
         {
             // Validar seguridad de la contraseña antes de guardar
-            if (!IsPasswordSecure(usuario.Contraseña))
+            if (!IsPasswordSecure(usuario.Password))
             {
                 throw new ArgumentException("La contraseña no cumple con los requisitos de seguridad.");
             }
 
             // Encripta la contraseña antes de guardarla
-            usuario.Contraseña = HashPassword(usuario.Contraseña); 
+            usuario.Password = HashPassword(usuario.Password);
             usuario.FechaRegistro = DateTime.Now;
             context.Usuarios.Add(usuario);
             await context.SaveChangesAsync();
@@ -56,19 +56,16 @@ namespace webapi.Services
             {
                 usuarioActual.Nombre = usuario.Nombre;
                 usuarioActual.Email = usuario.Email;
+                usuarioActual.EmailVerificado = usuario.EmailVerificado;
+                usuarioActual.EmailVerificationToken = usuario.EmailVerificationToken;
 
                 // Si la contraseña fue modificada, se encripta de nuevo
-                if (!BCrypt.Net.BCrypt.Verify(usuario.Contraseña, usuarioActual.Contraseña))
+                if (!BCrypt.Net.BCrypt.Verify(usuario.Password, usuarioActual.Password))
                 {
-                    // Validar seguridad de la nueva contraseña antes de actualizar
-                    if (!IsPasswordSecure(usuario.Contraseña))
-                    {
-                        throw new ArgumentException("La nueva contraseña no cumple con los requisitos de seguridad.");
-                    }
-
-                    usuarioActual.Contraseña = HashPassword(usuario.Contraseña); // Encripta la nueva contraseña
+                    usuarioActual.Password = HashPassword(usuario.Password);
                 }
 
+                // Guardar los cambios
                 await context.SaveChangesAsync();
             }
         }
@@ -154,69 +151,72 @@ namespace webapi.Services
         }
 
         // Actualizar la contraseña del usuario desde la funcionalidad de recuperación
-  public void UpdatePassword(int usuarioId, string newPassword)
-{
-    var user = context.Usuarios.Find(usuarioId);
-    if (user != null)
-    {
-        // Validar seguridad de la nueva contraseña
-        if (!IsPasswordSecure(newPassword))
+        public void UpdatePassword(int usuarioId, string newPassword)
         {
-            throw new ArgumentException("La nueva contraseña no cumple con los requisitos de seguridad.");
+            var user = context.Usuarios.Find(usuarioId);
+            if (user != null)
+            {
+                // Validar seguridad de la nueva contraseña
+                if (!IsPasswordSecure(newPassword))
+                {
+                    throw new ArgumentException("La nueva contraseña no cumple con los requisitos de seguridad.");
+                }
+
+                // Actualizar los campos de la base de datos
+                user.Password = HashPassword(newPassword);
+                user.PasswordResetToken = null; // Limpia el token de recuperación
+                user.TokenExpirationDate = null; // Limpia la fecha de expiración del token
+
+                // Guardar los cambios
+                context.SaveChanges();
+            }
         }
 
-        // Actualizar los campos de la base de datos
-        user.Contraseña = HashPassword(newPassword);
-        user.PasswordResetToken = null; // Limpia el token de recuperación
-        user.TokenExpirationDate = null; // Limpia la fecha de expiración del token
-
-        // Guardar los cambios
-        context.SaveChanges();
-    }
-}
-
-
         // Método para validar la seguridad de la contraseña
-public bool IsPasswordSecure(string password)
-{
-    // La contraseña debe tener al menos 8 caracteres
-    if (password.Length < 8)
-    {
-        Console.WriteLine("La contraseña no tiene la longitud mínima de 8 caracteres.");
-        return false;
-    }
+        public bool IsPasswordSecure(string password)
+        {
+            // La contraseña debe tener al menos 8 caracteres
+            if (password.Length < 8)
+            {
+                Console.WriteLine("La contraseña no tiene la longitud mínima de 8 caracteres.");
+                return false;
+            }
 
-    // Debe contener al menos una letra mayúscula
-    if (!Regex.IsMatch(password, @"[A-Z]"))
-    {
-        Console.WriteLine("La contraseña debe contener al menos una letra mayúscula.");
-        return false;
-    }
+            // Debe contener al menos una letra mayúscula
+            if (!Regex.IsMatch(password, @"[A-Z]"))
+            {
+                Console.WriteLine("La contraseña debe contener al menos una letra mayúscula.");
+                return false;
+            }
 
-    // Debe contener al menos una letra minúscula
-    if (!Regex.IsMatch(password, @"[a-z]"))
-    {
-        Console.WriteLine("La contraseña debe contener al menos una letra minúscula.");
-        return false;
-    }
+            // Debe contener al menos una letra minúscula
+            if (!Regex.IsMatch(password, @"[a-z]"))
+            {
+                Console.WriteLine("La contraseña debe contener al menos una letra minúscula.");
+                return false;
+            }
 
-    // Debe contener al menos un dígito
-    if (!Regex.IsMatch(password, @"[0-9]"))
-    {
-        Console.WriteLine("La contraseña debe contener al menos un número.");
-        return false;
-    }
+            // Debe contener al menos un dígito
+            if (!Regex.IsMatch(password, @"[0-9]"))
+            {
+                Console.WriteLine("La contraseña debe contener al menos un número.");
+                return false;
+            }
 
-    // Debe contener al menos un carácter especial
-    if (!Regex.IsMatch(password, @"[\W_]"))
-    {
-        Console.WriteLine("La contraseña debe contener al menos un carácter especial.");
-        return false;
-    }
+            // Debe contener al menos un carácter especial
+            if (!Regex.IsMatch(password, @"[\W_]"))
+            {
+                Console.WriteLine("La contraseña debe contener al menos un carácter especial.");
+                return false;
+            }
 
-    return true;
-}
+            return true;
+        }
 
+        public Usuario GetUserByVerificationToken(string token)
+        {
+            return context.Usuarios.SingleOrDefault(u => u.EmailVerificationToken == token);
+        }
     }
 
     public interface IUsuarioService
@@ -240,7 +240,9 @@ public bool IsPasswordSecure(string password)
         Usuario GetUserByEmail(string email);
         void UpdatePassword(int usuarioId, string newPassword);
         string HashPassword(string password);
-            // Validación de seguridad de contraseñas
-    bool IsPasswordSecure(string password);  // Agrega este método
+
+        // Validación de seguridad de contraseñas
+        bool IsPasswordSecure(string password);
+        Usuario GetUserByVerificationToken(string token);
     }
 }

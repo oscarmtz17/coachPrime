@@ -4,7 +4,7 @@ public class Usuario
     public int UsuarioId { get; set; } 
     public required string Nombre { get; set; }
     public required string Email { get; set; }
-    public required string Contraseña { get; set; }
+    public required string Password { get; set; }
 
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
 
@@ -19,5 +19,9 @@ public class Usuario
     public DateTime? TokenExpirationDate { get; set; } // Fecha de expiración del token de recuperación
 
     public string Rol { get; set; }  // Nuevo campo para roles
+
+     // Verificación de correo electrónico
+    public bool EmailVerificado { get; set; } = false; // Nuevo campo para verificar si el correo fue confirmado
+    public string? EmailVerificationToken { get; set; } // Token para verificar el correo
 
 }

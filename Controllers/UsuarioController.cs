@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using webapi.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+
 namespace webapi.Controllers;
 
 [Route("api/[controller]")]
@@ -14,7 +15,7 @@ public class UsuarioController : ControllerBase
         usuarioService = service;
     }
 
-[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult Get()
     {
@@ -22,33 +23,20 @@ public class UsuarioController : ControllerBase
         return Ok(usuarios);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Post([FromBody] Usuario usuario)
-        {
-        if (ModelState.IsValid)
-        {
-            await usuarioService.Save(usuario);
-            return Ok("Usuario creado exitosamente");
-        }
-        return BadRequest(ModelState);
-    }
-
-    //Actualizar un Usuario existente
-
+    // Actualizar un Usuario existente
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, [FromBody] Usuario usuario)
     {
         if (ModelState.IsValid)
         {
-        await usuarioService.Update(id, usuario);
-        return Ok();
-
+            await usuarioService.Update(id, usuario);
+            return Ok();
         }
 
         return BadRequest(ModelState);
     }
 
-//Eliminar un usuario
+    // Eliminar un usuario
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
