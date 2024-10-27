@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -11,9 +12,11 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(CoachPrimeContext))]
-    partial class TareasContextModelSnapshot : ModelSnapshot
+    [Migration("20241026233410_AddPhoneToUser")]
+    partial class AddPhoneToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

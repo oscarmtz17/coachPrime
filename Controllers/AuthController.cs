@@ -30,10 +30,10 @@ namespace webapi.Controllers
                 return Unauthorized("Credenciales incorrectas");
             }
 
-            if (!user.EmailVerificado)
-            {
-                return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
-            }
+            // if (!user.EmailVerificado)
+            // {
+            //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+            // }
 
             var token = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
@@ -131,8 +131,9 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         Nombre = request.Nombre,
         Email = request.Email,
-        Password = _usuarioService.HashPassword(request.Password),
-         Rol = "Usuario", // Asignamos un rol predeterminado
+        Password = request.Password,
+        Phone = request.Phone,
+        Rol = "Usuario", // Asignamos un rol predeterminado
         EmailVerificationToken = GenerateVerificationToken(),
         EmailVerificado = false // El correo no está verificado al principio
     };
@@ -257,5 +258,6 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         public string Nombre { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
+        public string? Phone { get; set; }
     }
 }

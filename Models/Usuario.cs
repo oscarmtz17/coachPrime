@@ -4,6 +4,7 @@ public class Usuario
     public int UsuarioId { get; set; } 
     public required string Nombre { get; set; }
     public required string Email { get; set; }
+    public string? Phone { get; set; }
     public required string Password { get; set; }
 
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
