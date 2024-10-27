@@ -17,6 +17,22 @@ namespace webapi.Controllers
             _pdfService = pdfService;
         }
 
+        // GET: api/rutina/cliente/{clienteId}
+        [HttpGet("cliente/{clienteId}")]
+        public async Task<IActionResult> GetRutinasByClienteId(int clienteId)
+        {
+            var rutinas = await _rutinaService.GetRutinasByClienteIdAsync(clienteId);
+
+            if (rutinas != null && rutinas.Any())
+            {
+                return Ok(rutinas);
+            }
+
+            return NotFound("No se encontraron rutinas para este cliente.");
+        }
+
+
+
         // Endpoint para descargar el PDF de una rutina
         [HttpGet("{clienteId}/{rutinaId}/pdf")]
         public async Task<IActionResult> DescargarRutinaPdf(int clienteId, int rutinaId)

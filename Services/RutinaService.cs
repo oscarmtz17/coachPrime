@@ -101,6 +101,22 @@ namespace webapi.Services
                 .FirstOrDefaultAsync(r => r.RutinaId == rutinaId);
         }
 
+        public async Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId)
+        {
+            return await _context.Rutinas
+                .Where(r => r.ClienteId == clienteId)
+                .Select(r => new RutinaBasicInfo
+                {
+                    RutinaId = r.RutinaId,
+                    Nombre = r.Nombre,
+                    Descripcion = r.Descripcion,
+                    FechaInicio = r.FechaInicio
+                })
+                .ToListAsync();
+        }
+
+
+
         public async Task<bool> UpdateRutinaAsync(int rutinaId, CreateRutinaRequest request)
         {
             var rutina = await _context.Rutinas
@@ -147,5 +163,6 @@ namespace webapi.Services
         Task<bool> DeleteRutinaAsync(int rutinaId);
         Task<Rutina> GetRutinaByIdAsync(int clienteId, int rutinaId);
         Task<Rutina> GetRutinaByIdAsync(int rutinaId);
+         Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId);
     }
 }
