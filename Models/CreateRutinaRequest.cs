@@ -27,4 +27,6 @@ public class EjercicioRequest
     public int Series { get; set; }
     public int Repeticiones { get; set; }
     public string ImagenUrl { get; set; }
+    public string Descripcion { get; set; } // Nueva propiedad para la descripción
 }
+
