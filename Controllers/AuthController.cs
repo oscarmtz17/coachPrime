@@ -126,6 +126,12 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         return BadRequest("El correo ya está registrado.");
     }
 
+    var userExistsPhone = _usuarioService.GetUserByPhone(request.Phone);
+    if (userExistsPhone != null)
+    {
+        return BadRequest("El número de teléfono ya está registrado.");
+    }
+
     // Crear nuevo usuario
     var newUser = new Usuario
     {
@@ -146,6 +152,7 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
 
     return Ok("Usuario registrado exitosamente. Por favor, verifique su correo electrónico.");
 }
+
 
 
 

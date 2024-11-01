@@ -219,6 +219,13 @@ namespace webapi.Services
         {
             return context.Usuarios.SingleOrDefault(u => u.EmailVerificationToken == token);
         }
+
+        public Usuario GetUserByPhone(string phone)
+        {
+            return context.Usuarios.FirstOrDefault(u => u.Phone == phone);
+        }
+
+
     }
 
     public interface IUsuarioService
@@ -228,6 +235,7 @@ namespace webapi.Services
         Task Update(int id, Usuario usuario);
         Task Delete(int id);
         Usuario ValidateUser(string email, string contraseña);
+        Usuario GetUserByPhone(string phone);
 
         // Métodos para manejo de Refresh Tokens
         void SaveRefreshToken(int usuarioId, string refreshToken);
