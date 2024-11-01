@@ -42,6 +42,7 @@ namespace webapi.Services
             }
 
             // Encripta la contraseña antes de guardarla
+            usuario.Apellido=usuario.Apellido;
             usuario.Password = HashPassword(usuario.Password);
             usuario.Phone = usuario.Phone;
             usuario.FechaRegistro = DateTime.Now;

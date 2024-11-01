@@ -120,8 +120,8 @@ public IActionResult VerifyEmail([FromBody] VerifyEmailRequest request)
       [HttpPost("register")]
 public async Task<IActionResult> Register([FromBody] RegisterRequest request)
 {
-    var userExists = _usuarioService.GetUserByEmail(request.Email);
-    if (userExists != null)
+    var userExistsEmail = _usuarioService.GetUserByEmail(request.Email);
+    if (userExistsEmail != null)
     {
         return BadRequest("El correo ya está registrado.");
     }
@@ -130,6 +130,7 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     var newUser = new Usuario
     {
         Nombre = request.Nombre,
+        Apellido = request.Apellido,
         Email = request.Email,
         Password = request.Password,
         Phone = request.Phone,
@@ -256,6 +257,7 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     public class RegisterRequest
     {
         public string Nombre { get; set; }
+        public string Apellido { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
         public string? Phone { get; set; }
