@@ -2,7 +2,7 @@ public class Rutina
 {
     public int RutinaId { get; set; }
     public string Nombre { get; set; }
-    public string Descripcion { get; set; }
+    public string? Descripcion { get; set; }
     public DateTime FechaInicio { get; set; } = DateTime.Now;
     public DateTime? FechaFin { get; set; }  // Fecha opcional para finalización de la rutina
 

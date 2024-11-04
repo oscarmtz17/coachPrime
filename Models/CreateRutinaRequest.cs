@@ -1,7 +1,7 @@
 public class CreateRutinaRequest
 {
     public string Nombre { get; set; }
-    public string Descripcion { get; set; }
+    public string? Descripcion { get; set; }
     public int ClienteId { get; set; }
     public int UsuarioId { get; set; }
 
@@ -27,6 +27,6 @@ public class EjercicioRequest
     public int Series { get; set; }
     public int Repeticiones { get; set; }
     public string ImagenUrl { get; set; }
-    public string Descripcion { get; set; } // Nueva propiedad para la descripción
+    public string? Descripcion { get; set; } // Nueva propiedad para la descripción
 }
 
