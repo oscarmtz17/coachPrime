@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -238,6 +239,37 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var verificationLink = $"https://tudominio.com/verify-email?token={verificationToken}";
             var message = $"Haga clic en el siguiente enlace para verificar su correo electrónico: {verificationLink}";
+        }
+
+                // Endpoint para obtener el usuario actual
+        [HttpGet("current-user")]
+        [Authorize]
+        public IActionResult GetCurrentUser()
+        {
+            // Obtiene el ID del usuario actual desde el token
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim.Value);
+            var user = _usuarioService.GetUserById(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Devolver solo los datos necesarios del usuario
+            return Ok(new
+            {
+                user.UsuarioId,
+                user.Nombre,
+                user.Apellido,
+                user.Email,
+                user.Phone
+            });
         }
     }
 
