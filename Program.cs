@@ -2,27 +2,38 @@ using webapi;
 using webapi.Services;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
+using Amazon.S3;
+using Amazon.Runtime;
 using System.Text;
-using Microsoft.AspNetCore.Cors; // Importa el paquete
-
+using Microsoft.AspNetCore.Cors;
+using Amazon.Extensions.NETCore.Setup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configurar el cliente de Amazon S3 con credenciales específicas desde appsettings.json
+var accessKey = builder.Configuration["AWS:AccessKey"];
+var secretKey = builder.Configuration["AWS:SecretKey"];
+var region = builder.Configuration["AWS:Region"];
 
+var credentials = new BasicAWSCredentials(accessKey, secretKey);
+var s3Config = new AmazonS3Config { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region) };
+var s3Client = new AmazonS3Client(credentials, s3Config);
+
+// Registra el cliente de Amazon S3 en el contenedor de servicios
+builder.Services.AddSingleton<IAmazonS3>(s3Client);
+
+// Add services to the container.
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSqlServer<CoachPrimeContext>("Data Source=LAPTOP-NTB0BH1O\\MSSQLSERVERAPP; Initial Catalog=CoachPrimeDB; user id=sa; password=P@ssw0rd; TrustServerCertificate=True");
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRutinaService, RutinaService>();
-// Registra el servicio de progreso
 builder.Services.AddScoped<IProgresoService, ProgresoService>();
 builder.Services.AddScoped<IDietaService, DietaService>();
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<S3Service>();
 
 // Añadir autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -40,8 +51,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
-
 builder.Services.AddControllers()
     .AddJsonOptions(x =>
     {
@@ -49,7 +58,7 @@ builder.Services.AddControllers()
         x.JsonSerializerOptions.WriteIndented = true; // Para formatear la salida de manera más legible
     });
 
-    // Configurar CORS
+// Configurar CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
@@ -60,10 +69,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
-
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

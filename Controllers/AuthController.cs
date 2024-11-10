@@ -21,27 +21,29 @@ namespace webapi.Controllers
             _usuarioService = usuarioService;
         }
 
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest loginRequest)
-        {
-            var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
-            if (user == null)
-            {
-                return Unauthorized("Credenciales incorrectas");
-            }
+[HttpPost("login")]
+public IActionResult Login([FromBody] LoginRequest loginRequest)
+{
+    var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
+    if (user == null)
+    {
+        return Unauthorized("Credenciales incorrectas");
+    }
 
-            // if (!user.EmailVerificado)
-            // {
-            //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
-            // }
+    // if (!user.EmailVerificado)
+    // {
+    //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+    // }
 
-            var token = GenerateJwtToken(user);
-            var refreshToken = GenerateRefreshToken();
+    var token = GenerateJwtToken(user);
+    var refreshToken = GenerateRefreshToken();
 
-            _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
+    _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
 
-            return Ok(new { token, refreshToken });
-        }
+    // Incluye el `userId` en la respuesta
+    return Ok(new { userId = user.UsuarioId, token, refreshToken });
+}
+
 
         [HttpPost("refresh")]
         public IActionResult Refresh([FromBody] TokenRequest tokenRequest)
