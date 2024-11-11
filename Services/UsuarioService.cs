@@ -154,7 +154,12 @@ namespace webapi.Services
                 // Validar seguridad de la nueva contraseña
                 if (!IsPasswordSecure(newPassword))
                 {
-                    throw new ArgumentException("La nueva contraseña no cumple con los requisitos de seguridad.");
+                    throw new ArgumentException("La nueva contraseña no cumple con los requisitos de seguridad. Asegúrate de que:\n" +
+                  "- Tenga al menos 8 caracteres.\n" +
+                  "- Contenga al menos una letra mayúscula.\n" +
+                  "- Contenga al menos una letra minúscula.\n" +
+                  "- Contenga al menos un número.\n" +
+                  "- Incluya al menos un carácter especial (por ejemplo: !@#$%^&*).");
                 }
 
                 // Actualizar los campos de la base de datos
@@ -223,6 +228,19 @@ namespace webapi.Services
             return context.Usuarios.Any(u => u.Phone == phone);
         }
 
+        public bool ValidateUserPassword(int usuarioId, string currentPassword)
+{
+    var user = context.Usuarios.Find(usuarioId);
+    if (user == null)
+    {
+        return false; // Usuario no encontrado
+    }
+
+    // Verificar que la contraseña ingresada coincida con la almacenada
+    return BCrypt.Net.BCrypt.Verify(currentPassword, user.Password);
+}
+
+
 
 
     }
@@ -254,6 +272,8 @@ namespace webapi.Services
         bool IsPasswordSecure(string password);
         Usuario GetUserByVerificationToken(string token);
         bool IsPhoneRegistered(string phone);
+
+        bool ValidateUserPassword(int usuarioId, string currentPassword);
 
     }
 }

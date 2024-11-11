@@ -96,7 +96,13 @@ public IActionResult Login([FromBody] LoginRequest loginRequest)
 
             if (!_usuarioService.IsPasswordSecure(request.NewPassword))
             {
-                return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad.");
+                return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad. Asegúrate de que:\n" +
+                  "- Tenga al menos 8 caracteres.\n" +
+                  "- Contenga al menos una letra mayúscula.\n" +
+                  "- Contenga al menos una letra minúscula.\n" +
+                  "- Contenga al menos un número.\n" +
+                  "- Incluya al menos un carácter especial (por ejemplo: !@#$%^&*).");
+
             }
 
             _usuarioService.UpdatePassword(user.UsuarioId, request.NewPassword);
@@ -271,7 +277,58 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
                 user.Phone
             });
         }
+
+        [HttpPost("change-password")]
+[Authorize]
+public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+{
+    // Obtener el ID del usuario desde el token de autenticación
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+    if (userIdClaim == null)
+    {
+        return Unauthorized();
     }
+
+    int userId = int.Parse(userIdClaim.Value);
+    var user = _usuarioService.GetUserById(userId);
+
+    if (user == null)
+    {
+        return NotFound("Usuario no encontrado.");
+    }
+
+    // Verificar que la contraseña actual sea correcta
+    if (!_usuarioService.ValidateUserPassword(user.UsuarioId, request.CurrentPassword))
+
+    {
+        return BadRequest("La contraseña actual es incorrecta.");
+    }
+
+    // Verificar que la nueva contraseña cumpla con los requisitos de seguridad
+    if (!_usuarioService.IsPasswordSecure(request.NewPassword))
+    {
+        return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad. Asegúrate de que:\n" +
+                  "- Tenga al menos 8 caracteres.\n" +
+                  "- Contenga al menos una letra mayúscula.\n" +
+                  "- Contenga al menos una letra minúscula.\n" +
+                  "- Contenga al menos un número.\n" +
+                  "- Incluya al menos un carácter especial (por ejemplo: !@#$%^&*).");
+
+    }
+
+    // Actualizar la contraseña
+    _usuarioService.UpdatePassword(user.UsuarioId, request.NewPassword);
+
+    return Ok("Su contraseña ha sido actualizada exitosamente.");
+}
+
+    }
+
+    public class ChangePasswordRequest
+{
+    public string CurrentPassword { get; set; }
+    public string NewPassword { get; set; }
+}
 
     public class TokenRequest
     {
