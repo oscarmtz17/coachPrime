@@ -50,22 +50,15 @@ namespace webapi.Services
             await context.SaveChangesAsync();
         }
 
-        // Actualizar un usuario existente con la posibilidad de encriptar la nueva contraseña
         public async Task Update(int id, Usuario usuario)
         {
             var usuarioActual = await context.Usuarios.FindAsync(id);
             if (usuarioActual != null)
             {
+                // Solo actualizamos Nombre, Apellido y Phone
                 usuarioActual.Nombre = usuario.Nombre;
-                usuarioActual.Email = usuario.Email;
-                usuarioActual.EmailVerificado = usuario.EmailVerificado;
-                usuarioActual.EmailVerificationToken = usuario.EmailVerificationToken;
-
-                // Si la contraseña fue modificada, se encripta de nuevo
-                if (!BCrypt.Net.BCrypt.Verify(usuario.Password, usuarioActual.Password))
-                {
-                    usuarioActual.Password = HashPassword(usuario.Password);
-                }
+                usuarioActual.Apellido = usuario.Apellido;
+                usuarioActual.Phone = usuario.Phone;
 
                 // Guardar los cambios
                 await context.SaveChangesAsync();
@@ -225,6 +218,12 @@ namespace webapi.Services
             return context.Usuarios.FirstOrDefault(u => u.Phone == phone);
         }
 
+        public bool IsPhoneRegistered(string phone)
+        {
+            return context.Usuarios.Any(u => u.Phone == phone);
+        }
+
+
 
     }
 
@@ -254,5 +253,7 @@ namespace webapi.Services
         // Validación de seguridad de contraseñas
         bool IsPasswordSecure(string password);
         Usuario GetUserByVerificationToken(string token);
+        bool IsPhoneRegistered(string phone);
+
     }
 }

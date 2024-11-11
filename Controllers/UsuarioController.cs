@@ -23,18 +23,45 @@ public class UsuarioController : ControllerBase
         return Ok(usuarios);
     }
 
-    // Actualizar un Usuario existente
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, [FromBody] Usuario usuario)
+    [Authorize]
+    [HttpGet("{id}")]
+    public IActionResult GetById(int id)
     {
-        if (ModelState.IsValid)
+        var usuario = usuarioService.GetUserById(id);
+        if (usuario == null)
         {
-            await usuarioService.Update(id, usuario);
-            return Ok();
+            return NotFound("Usuario no encontrado");
+        }
+        return Ok(usuario);
+    }
+
+
+    // Actualizar un Usuario existente
+
+[HttpPut("{id}")]
+public async Task<IActionResult> Put(int id, [FromBody] UsuarioUpdateRequest usuarioUpdate)
+{
+    if (ModelState.IsValid)
+    {
+        var existingUser = usuarioService.GetUserById(id);
+        if (existingUser == null)
+        {
+            return NotFound("Usuario no encontrado.");
         }
 
-        return BadRequest(ModelState);
+        // Actualizamos solo Nombre, Apellido y Phone
+        existingUser.Nombre = usuarioUpdate.Nombre;
+        existingUser.Apellido = usuarioUpdate.Apellido;
+        existingUser.Phone = usuarioUpdate.Phone;
+
+        await usuarioService.Update(id, existingUser);
+        return Ok("Usuario actualizado exitosamente.");
     }
+
+    return BadRequest(ModelState);
+}
+
+
 
     // Eliminar un usuario
     [HttpDelete("{id}")]
@@ -43,4 +70,13 @@ public class UsuarioController : ControllerBase
         await usuarioService.Delete(id);
         return Ok("Usuario Eliminado");
     }
+
+    [HttpGet("check-phone")]
+    public IActionResult CheckPhoneExists([FromQuery] string phone)
+    {
+        var exists = usuarioService.IsPhoneRegistered(phone);
+        return Ok(new { exists });
+    }
+
 }
+
