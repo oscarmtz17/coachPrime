@@ -84,4 +84,27 @@ public class ImagesController : ControllerBase
         return Ok(new { Url = url });
     }
 
+[HttpGet("user-logo")]
+[Authorize]
+public async Task<IActionResult> GetUserLogo()
+{
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (string.IsNullOrEmpty(userId))
+        return Unauthorized("User ID not found.");
+
+    // Prefijo exacto para la carpeta de logos del usuario
+    var prefix = $"private/{userId}/logo/";
+
+    // Obtén el logo específico usando ListUserImagesByCategoryAsync para obtener resultados más predecibles
+    var logos = await _s3Service.ListUserImagesByCategoryAsync(userId, "logo");
+
+    if (logos.Count == 0)
+        return NotFound("No logo found for the user.");
+
+    return Ok(new { url = logos[0] });
+}
+
+
+
+
 }
