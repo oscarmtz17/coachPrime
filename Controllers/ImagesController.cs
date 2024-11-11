@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using webapi.Services;
 
@@ -62,4 +63,25 @@ public class ImagesController : ControllerBase
         var combinedImages = publicImages.Concat(userImages).ToList();
         return Ok(combinedImages);
     }
+
+    [HttpPost("upload-logo")]
+    [Authorize]
+    public async Task<IActionResult> UploadUserLogo([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found.");
+
+        string uniqueIdentifier = Guid.NewGuid().ToString();
+        var extension = file.FileName.Split('.').Last();
+        var key = $"private/{userId}/logo/{uniqueIdentifier}_logo.{extension}";
+
+        using var stream = file.OpenReadStream();
+        var url = await _s3Service.UploadImageAsync(key, stream);
+        return Ok(new { Url = url });
+    }
+
 }
