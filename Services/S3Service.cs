@@ -106,4 +106,24 @@ public class S3Service
 
         await _s3Client.DeleteObjectAsync(request);
     }
+
+    public async Task<List<string>> ListUserProgressImagesAsync(string userId, string progressDate)
+{
+    var request = new ListObjectsV2Request
+    {
+        BucketName = _bucketName,
+        Prefix = $"private/{userId}/progress/{progressDate}/"
+    };
+
+    var response = await _s3Client.ListObjectsV2Async(request);
+    var imageUrls = response.S3Objects
+        .Where(obj => !obj.Key.EndsWith("/"))
+        .Select(obj => GetPresignedUrl(obj.Key))
+        .ToList();
+
+    return imageUrls;
+}
+
+
+
 }

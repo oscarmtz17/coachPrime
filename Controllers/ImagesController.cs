@@ -84,25 +84,61 @@ public class ImagesController : ControllerBase
         return Ok(new { Url = url });
     }
 
-[HttpGet("user-logo")]
-[Authorize]
-public async Task<IActionResult> GetUserLogo()
-{
-    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    if (string.IsNullOrEmpty(userId))
-        return Unauthorized("User ID not found.");
+    [HttpGet("user-logo")]
+    [Authorize]
+    public async Task<IActionResult> GetUserLogo()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found.");
 
-    // Prefijo exacto para la carpeta de logos del usuario
-    var prefix = $"private/{userId}/logo/";
+        // Prefijo exacto para la carpeta de logos del usuario
+        var prefix = $"private/{userId}/logo/";
 
-    // Obtén el logo específico usando ListUserImagesByCategoryAsync para obtener resultados más predecibles
-    var logos = await _s3Service.ListUserImagesByCategoryAsync(userId, "logo");
+        // Obtén el logo específico usando ListUserImagesByCategoryAsync para obtener resultados más predecibles
+        var logos = await _s3Service.ListUserImagesByCategoryAsync(userId, "logo");
 
-    if (logos.Count == 0)
-        return NotFound("No logo found for the user.");
+        if (logos.Count == 0)
+            return NotFound("No logo found for the user.");
 
-    return Ok(new { url = logos[0] });
-}
+        return Ok(new { url = logos[0] });
+    }
+
+    [Authorize]
+    [HttpPost("upload-progress-images")]
+    public async Task<IActionResult> UploadProgressImages(
+        [FromForm] List<IFormFile> files,
+        [FromForm] string progressDate
+    )
+    {
+        if (files == null || files.Count == 0)
+            return BadRequest("No files uploaded.");
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found.");
+
+        if (string.IsNullOrEmpty(progressDate))
+            return BadRequest("Progress date is required.");
+
+        var urls = new List<string>();
+        foreach (var file in files)
+        {
+            if (file.Length > 0)
+            {
+                string uniqueIdentifier = Guid.NewGuid().ToString();
+                var extension = file.FileName.Split('.').Last();
+                var key = $"private/{userId}/progress/{progressDate}/{uniqueIdentifier}.{extension}";
+
+                using var stream = file.OpenReadStream();
+                var url = await _s3Service.UploadImageAsync(key, stream);
+                urls.Add(url);
+            }
+        }
+
+        return Ok(new { Urls = urls });
+    }
+
 
 
 
