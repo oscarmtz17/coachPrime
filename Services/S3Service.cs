@@ -48,20 +48,20 @@ public class S3Service
     }
 
     public async Task<List<string>> ListImagesAsync()
-{
-    var request = new ListObjectsV2Request
     {
-        BucketName = _bucketName
-    };
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName
+        };
 
-    var response = await _s3Client.ListObjectsV2Async(request);
-    var imageUrls = response.S3Objects
-        .Where(obj => !obj.Key.EndsWith("/"))
-        .Select(obj => GetPresignedUrl(obj.Key)) // Generamos una URL firmada
-        .ToList();
+        var response = await _s3Client.ListObjectsV2Async(request);
+        var imageUrls = response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/"))
+            .Select(obj => GetPresignedUrl(obj.Key)) // Generamos una URL firmada
+            .ToList();
 
-    return imageUrls;
-}
+        return imageUrls;
+    }
 
 
     public async Task<List<string>> ListUserImagesByCategoryAsync(string userId, string category)
@@ -108,21 +108,42 @@ public class S3Service
     }
 
     public async Task<List<string>> ListUserProgressImagesAsync(string userId, string progressDate)
-{
-    var request = new ListObjectsV2Request
     {
-        BucketName = _bucketName,
-        Prefix = $"private/{userId}/progress/{progressDate}/"
-    };
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            Prefix = $"private/{userId}/progress/{progressDate}/"
+        };
 
-    var response = await _s3Client.ListObjectsV2Async(request);
-    var imageUrls = response.S3Objects
-        .Where(obj => !obj.Key.EndsWith("/"))
-        .Select(obj => GetPresignedUrl(obj.Key))
-        .ToList();
+        var response = await _s3Client.ListObjectsV2Async(request);
+        var imageUrls = response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/"))
+            .Select(obj => GetPresignedUrl(obj.Key))
+            .ToList();
 
-    return imageUrls;
-}
+        return imageUrls;
+    }
+
+    public async Task DeleteFolderAsync(string folderKey)
+    {
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            Prefix = folderKey
+        };
+
+        var response = await _s3Client.ListObjectsV2Async(request);
+        if (response.S3Objects.Count > 0)
+        {
+            var deleteObjectsRequest = new DeleteObjectsRequest
+            {
+                BucketName = _bucketName,
+                Objects = response.S3Objects.Select(obj => new KeyVersion { Key = obj.Key }).ToList()
+            };
+
+            await _s3Client.DeleteObjectsAsync(deleteObjectsRequest);
+        }
+    }
 
 
 

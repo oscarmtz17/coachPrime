@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -52,8 +53,13 @@ public class ProgresoController : ControllerBase
     [HttpDelete("{clienteId}/{progresoId}")]
     public async Task<IActionResult> DeleteProgreso(int clienteId, int progresoId)
     {
-        var result = await _progresoService.DeleteProgresoAsync(clienteId, progresoId);
-        if (result) return Ok("Progreso eliminado exitosamente.");
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found.");
+
+        var result = await _progresoService.DeleteProgresoAsync(clienteId, progresoId, userId);
+        if (result) return Ok("Progreso y sus imágenes eliminados exitosamente.");
         return NotFound("Progreso no encontrado.");
     }
+
 }

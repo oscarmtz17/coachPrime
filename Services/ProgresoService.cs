@@ -4,10 +4,13 @@ using webapi;
 public class ProgresoService : IProgresoService
 {
     private readonly CoachPrimeContext _context;
+    private readonly S3Service _s3Service;
 
-    public ProgresoService(CoachPrimeContext context)
+
+    public ProgresoService(CoachPrimeContext context, S3Service s3Service)
     {
         _context = context;
+        _s3Service = s3Service;
     }
 
     // Obtener todos los progresos de un cliente
@@ -83,16 +86,23 @@ public class ProgresoService : IProgresoService
         return true;
     }
 
-    // Eliminar un progreso
-    public async Task<bool> DeleteProgresoAsync(int clienteId, int progresoId)
+    // Eliminar un progreso y su carpeta asociada en S3
+    public async Task<bool> DeleteProgresoAsync(int clienteId, int progresoId, string userId)
     {
         var progreso = await _context.Progresos.FirstOrDefaultAsync(p => p.ClienteId == clienteId && p.ProgresoId == progresoId);
         if (progreso == null) return false;
 
+        // Eliminar carpeta asociada en S3
+        var folderKey = $"private/{userId}/progress/{progresoId}/";
+        await _s3Service.DeleteFolderAsync(folderKey);
+
+        // Eliminar el progreso de la base de datos
         _context.Progresos.Remove(progreso);
         await _context.SaveChangesAsync();
+
         return true;
     }
+
 }
 
 public interface IProgresoService
@@ -101,6 +111,7 @@ public interface IProgresoService
     Task<Progreso> GetProgresoByIdAsync(int clienteId, int progresoId);
     Task<int?> RegistrarProgresoAsync(int clienteId, ProgresoRequest request);
     Task<bool> UpdateProgresoAsync(int clienteId, int progresoId, ProgresoRequest request);
-    Task<bool> DeleteProgresoAsync(int clienteId, int progresoId);
+    Task<bool> DeleteProgresoAsync(int clienteId, int progresoId, string userId); // Aquí está el ajuste
 }
+
 
