@@ -145,6 +145,24 @@ public class S3Service
         }
     }
 
+    public async Task<List<string>> ListImagesInFolderAsync(string folderKey)
+    {
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            Prefix = folderKey
+        };
+
+        var response = await _s3Client.ListObjectsV2Async(request);
+        var imageUrls = response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/")) // Ignorar las carpetas
+            .Select(obj => GetPresignedUrl(obj.Key)) // Generar URLs firmadas
+            .ToList();
+
+        return imageUrls;
+    }
+
+
 
 
 }

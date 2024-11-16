@@ -138,6 +138,23 @@ public class ImagesController : ControllerBase
     }
 
 
+    [Authorize]
+    [HttpGet("list-progress-images/{clienteId}/{progresoId}")]
+    public async Task<IActionResult> ListProgressImages(int clienteId, int progresoId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found.");
+
+        var folderKey = $"private/{userId}/progress/{progresoId}/";
+        var images = await _s3Service.ListImagesInFolderAsync(folderKey);
+
+        if (images == null || images.Count == 0)
+            return NotFound("No images found for the specified progress.");
+
+        return Ok(new { ProgresoId = progresoId, Images = images });
+    }
+
 
 
 
