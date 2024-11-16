@@ -23,10 +23,10 @@ public class ProgresoService : IProgresoService
     }
 
     // Registrar un nuevo progreso
-    public async Task<bool> RegistrarProgresoAsync(int clienteId, ProgresoRequest request)
+    public async Task<int?> RegistrarProgresoAsync(int clienteId, ProgresoRequest request)
     {
         var cliente = await _context.Clientes.FindAsync(clienteId);
-        if (cliente == null) return false;
+        if (cliente == null) return null;
 
         int edad = DateTime.Now.Year - cliente.FechaNacimiento.Year;
         if (DateTime.Now.DayOfYear < cliente.FechaNacimiento.DayOfYear) edad--;
@@ -57,8 +57,10 @@ public class ProgresoService : IProgresoService
 
         _context.Progresos.Add(progreso);
         await _context.SaveChangesAsync();
-        return true;
+
+        return progreso.ProgresoId; // Devolver el ID del progreso recién creado
     }
+
 
     // Actualizar un progreso existente
     public async Task<bool> UpdateProgresoAsync(int clienteId, int progresoId, ProgresoRequest request)
@@ -97,7 +99,8 @@ public interface IProgresoService
 {
     Task<IEnumerable<Progreso>> GetAllProgresosAsync(int clienteId);
     Task<Progreso> GetProgresoByIdAsync(int clienteId, int progresoId);
-    Task<bool> RegistrarProgresoAsync(int clienteId, ProgresoRequest request);
+    Task<int?> RegistrarProgresoAsync(int clienteId, ProgresoRequest request);
     Task<bool> UpdateProgresoAsync(int clienteId, int progresoId, ProgresoRequest request);
     Task<bool> DeleteProgresoAsync(int clienteId, int progresoId);
 }
+

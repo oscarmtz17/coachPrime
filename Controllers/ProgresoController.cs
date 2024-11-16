@@ -32,10 +32,12 @@ public class ProgresoController : ControllerBase
     [HttpPost("{clienteId}")]
     public async Task<IActionResult> RegistrarProgreso(int clienteId, [FromBody] ProgresoRequest request)
     {
-        var result = await _progresoService.RegistrarProgresoAsync(clienteId, request);
-        if (result) return Ok("Progreso registrado exitosamente.");
-        return BadRequest("Error al registrar el progreso.");
+        var progresoId = await _progresoService.RegistrarProgresoAsync(clienteId, request);
+        if (progresoId == null) return BadRequest("Error al registrar el progreso.");
+
+        return Ok(new { ProgresoId = progresoId, Message = "Progreso registrado exitosamente." });
     }
+
 
     // PUT: api/progreso/{clienteId}/{progresoId} - Actualizar un progreso
     [HttpPut("{clienteId}/{progresoId}")]

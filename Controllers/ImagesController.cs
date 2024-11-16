@@ -105,10 +105,11 @@ public class ImagesController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("upload-progress-images")]
+    [HttpPost("upload-progress-images/{clienteId}/{progresoId}")]
     public async Task<IActionResult> UploadProgressImages(
-        [FromForm] List<IFormFile> files,
-        [FromForm] string progressDate
+        int clienteId,
+        int progresoId,
+        [FromForm] List<IFormFile> files
     )
     {
         if (files == null || files.Count == 0)
@@ -118,9 +119,6 @@ public class ImagesController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("User ID not found.");
 
-        if (string.IsNullOrEmpty(progressDate))
-            return BadRequest("Progress date is required.");
-
         var urls = new List<string>();
         foreach (var file in files)
         {
@@ -128,7 +126,7 @@ public class ImagesController : ControllerBase
             {
                 string uniqueIdentifier = Guid.NewGuid().ToString();
                 var extension = file.FileName.Split('.').Last();
-                var key = $"private/{userId}/progress/{progressDate}/{uniqueIdentifier}.{extension}";
+                var key = $"private/{userId}/progress/{progresoId}/{uniqueIdentifier}.{extension}";
 
                 using var stream = file.OpenReadStream();
                 var url = await _s3Service.UploadImageAsync(key, stream);
@@ -136,8 +134,9 @@ public class ImagesController : ControllerBase
             }
         }
 
-        return Ok(new { Urls = urls });
+        return Ok(new { ProgresoId = progresoId, Urls = urls });
     }
+
 
 
 
