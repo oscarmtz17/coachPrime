@@ -9,10 +9,12 @@ using webapi.Services;
 public class ImagesController : ControllerBase
 {
     private readonly S3Service _s3Service;
+    private readonly ILogger<ImagesController> _logger;
 
-    public ImagesController(S3Service s3Service)
+    public ImagesController(S3Service s3Service, ILogger<ImagesController> logger)
     {
         _s3Service = s3Service;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -154,6 +156,45 @@ public class ImagesController : ControllerBase
 
         return Ok(new { ProgresoId = progresoId, Images = images });
     }
+
+    [Authorize]
+    [HttpDelete("delete-progress-images/{clienteId}/{progresoId}")]
+    public async Task<IActionResult> DeleteProgressImages(
+     int clienteId,
+     int progresoId,
+     [FromBody] DeleteImagesRequest request)
+    {
+        try
+        {
+            if (request == null || request.ImagesToDelete == null || !request.ImagesToDelete.Any())
+            {
+
+                return BadRequest("El campo 'ImagesToDelete' es requerido y no puede estar vacío.");
+            }
+
+
+
+
+            foreach (var imageKey in request.ImagesToDelete)
+            {
+                if (!string.IsNullOrEmpty(imageKey))
+                {
+                    await _s3Service.DeleteImageAsync(imageKey);
+
+                }
+            }
+
+            return Ok("Imágenes eliminadas exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error durante la eliminación de imágenes: {ex.Message}");
+            return StatusCode(500, "Hubo un error al eliminar las imágenes.");
+        }
+    }
+
+
+
 
 
 
