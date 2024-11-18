@@ -52,24 +52,37 @@ namespace webapi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRutina([FromBody] CreateRutinaRequest request)
         {
-            // Validamos si el request es válido
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            // Llamamos al servicio para crear la rutina
-            var result = await _rutinaService.CreateRutinaAsync(request);
-            
-            if (result)
+            try
             {
-                return Ok("Rutina creada exitosamente.");
-            }
-            else
-            {
+                var result = await _rutinaService.CreateRutinaAsync(request);
+
+                if (result)
+                {
+                    return Ok("Rutina creada exitosamente.");
+                }
+
                 return BadRequest("Hubo un error al crear la rutina.");
             }
+            catch (Exception ex)
+            {
+                // Validar si la excepción es por falta de ejercicios
+                if (ex.Message.Contains("Debes agregar al menos un ejercicio"))
+                {
+                    return BadRequest(new { error = ex.Message });
+                }
+
+                // Manejar otros errores inesperados
+                Console.Error.WriteLine($"Error en CreateRutina: {ex.Message}");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
+
+
 
         // GET: api/rutina/{id}
         [HttpGet("{id}")]
@@ -95,7 +108,7 @@ namespace webapi.Controllers
             }
 
             var result = await _rutinaService.UpdateRutinaAsync(id, request);
-            
+
             if (result)
             {
                 return Ok("Rutina actualizada exitosamente.");
@@ -111,7 +124,7 @@ namespace webapi.Controllers
         public async Task<IActionResult> DeleteRutina(int id)
         {
             var result = await _rutinaService.DeleteRutinaAsync(id);
-            
+
             if (result)
             {
                 return Ok("Rutina eliminada exitosamente.");

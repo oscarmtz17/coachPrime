@@ -17,6 +17,12 @@ namespace webapi.Services
 
             try
             {
+                // Validar que haya al menos un ejercicio
+                if (!request.DiasEntrenamiento.Any(d => d.Agrupaciones.Any(a => a.Ejercicios.Any())))
+                {
+                    throw new Exception("Debes agregar al menos un ejercicio a tu rutina.");
+                }
+
                 var rutina = new Rutina
                 {
                     Nombre = request.Nombre,
@@ -55,7 +61,7 @@ namespace webapi.Services
                                 Nombre = ejercicio.Nombre,
                                 Series = ejercicio.Series,
                                 Repeticiones = ejercicio.Repeticiones,
-                                ImagenUrl = ejercicio.ImagenUrl // Agregar la URL de la imagen
+                                ImagenUrl = ejercicio.ImagenUrl
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -74,12 +80,14 @@ namespace webapi.Services
                 await transaction.CommitAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                Console.Error.WriteLine($"Error en CreateRutinaAsync: {ex.Message}");
+                throw; // Re-lanzamos la excepción para que sea manejada en el controlador
             }
         }
+
 
         public async Task<Rutina> GetRutinaByIdAsync(int clienteId, int rutinaId)
         {
@@ -117,127 +125,127 @@ namespace webapi.Services
 
 
 
-       public async Task<bool> UpdateRutinaAsync(int rutinaId, CreateRutinaRequest request)
-{
-    var rutina = await _context.Rutinas
-        .Include(r => r.DiasEntrenamiento)
-            .ThenInclude(d => d.Agrupaciones)
-                .ThenInclude(a => a.EjerciciosAgrupados)
-                    .ThenInclude(ea => ea.Ejercicio)
-        .FirstOrDefaultAsync(r => r.RutinaId == rutinaId);
-
-    if (rutina == null)
-    {
-        return false;
-    }
-
-    rutina.Nombre = request.Nombre;
-    rutina.Descripcion = request.Descripcion;
-
-    // Actualizar días de entrenamiento
-    foreach (var diaRequest in request.DiasEntrenamiento)
-    {
-        var diaExistente = rutina.DiasEntrenamiento.FirstOrDefault(d => d.DiaSemana == diaRequest.DiaSemana);
-
-        // Si el día de entrenamiento no existe, se agrega
-        if (diaExistente == null)
+        public async Task<bool> UpdateRutinaAsync(int rutinaId, CreateRutinaRequest request)
         {
-            diaExistente = new DiaEntrenamiento
-            {
-                DiaSemana = diaRequest.DiaSemana,
-                RutinaId = rutinaId
-            };
-            _context.DiasEntrenamiento.Add(diaExistente);
-            await _context.SaveChangesAsync();
-        }
+            var rutina = await _context.Rutinas
+                .Include(r => r.DiasEntrenamiento)
+                    .ThenInclude(d => d.Agrupaciones)
+                        .ThenInclude(a => a.EjerciciosAgrupados)
+                            .ThenInclude(ea => ea.Ejercicio)
+                .FirstOrDefaultAsync(r => r.RutinaId == rutinaId);
 
-        // Actualizar agrupaciones dentro de cada día
-        foreach (var agrupacionRequest in diaRequest.Agrupaciones)
-        {
-            var agrupacionExistente = diaExistente.Agrupaciones.FirstOrDefault(a => a.Tipo == agrupacionRequest.Tipo);
-
-            // Si la agrupación no existe, se agrega
-            if (agrupacionExistente == null)
+            if (rutina == null)
             {
-                agrupacionExistente = new Agrupacion
-                {
-                    Tipo = agrupacionRequest.Tipo,
-                    DiaEntrenamientoId = diaExistente.DiaEntrenamientoId
-                };
-                _context.Agrupaciones.Add(agrupacionExistente);
-                await _context.SaveChangesAsync();
+                return false;
             }
 
-            // Actualizar ejercicios en cada agrupación
-            var ejerciciosExistentes = agrupacionExistente.EjerciciosAgrupados.ToList();
-            foreach (var ejercicioRequest in agrupacionRequest.Ejercicios)
-            {
-                var ejercicioExistente = ejerciciosExistentes.FirstOrDefault(e => e.Ejercicio.Nombre == ejercicioRequest.Nombre);
+            rutina.Nombre = request.Nombre;
+            rutina.Descripcion = request.Descripcion;
 
-                if (ejercicioExistente == null)
+            // Actualizar días de entrenamiento
+            foreach (var diaRequest in request.DiasEntrenamiento)
+            {
+                var diaExistente = rutina.DiasEntrenamiento.FirstOrDefault(d => d.DiaSemana == diaRequest.DiaSemana);
+
+                // Si el día de entrenamiento no existe, se agrega
+                if (diaExistente == null)
                 {
-                    // Si el ejercicio no existe, se agrega
-                    var nuevoEjercicio = new Ejercicio
+                    diaExistente = new DiaEntrenamiento
                     {
-                        Nombre = ejercicioRequest.Nombre,
-                        Descripcion = ejercicioRequest.Descripcion,
-                        Series = ejercicioRequest.Series,
-                        Repeticiones = ejercicioRequest.Repeticiones,
-                        ImagenUrl = ejercicioRequest.ImagenUrl
+                        DiaSemana = diaRequest.DiaSemana,
+                        RutinaId = rutinaId
                     };
-                    _context.Ejercicios.Add(nuevoEjercicio);
+                    _context.DiasEntrenamiento.Add(diaExistente);
                     await _context.SaveChangesAsync();
+                }
 
-                    // Crear la relación en EjercicioAgrupado
-                    var nuevoEjercicioAgrupado = new EjercicioAgrupado
+                // Actualizar agrupaciones dentro de cada día
+                foreach (var agrupacionRequest in diaRequest.Agrupaciones)
+                {
+                    var agrupacionExistente = diaExistente.Agrupaciones.FirstOrDefault(a => a.Tipo == agrupacionRequest.Tipo);
+
+                    // Si la agrupación no existe, se agrega
+                    if (agrupacionExistente == null)
                     {
-                        AgrupacionId = agrupacionExistente.AgrupacionId,
-                        EjercicioId = nuevoEjercicio.EjercicioId
-                    };
-                    _context.EjercicioAgrupado.Add(nuevoEjercicioAgrupado);
+                        agrupacionExistente = new Agrupacion
+                        {
+                            Tipo = agrupacionRequest.Tipo,
+                            DiaEntrenamientoId = diaExistente.DiaEntrenamientoId
+                        };
+                        _context.Agrupaciones.Add(agrupacionExistente);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Actualizar ejercicios en cada agrupación
+                    var ejerciciosExistentes = agrupacionExistente.EjerciciosAgrupados.ToList();
+                    foreach (var ejercicioRequest in agrupacionRequest.Ejercicios)
+                    {
+                        var ejercicioExistente = ejerciciosExistentes.FirstOrDefault(e => e.Ejercicio.Nombre == ejercicioRequest.Nombre);
+
+                        if (ejercicioExistente == null)
+                        {
+                            // Si el ejercicio no existe, se agrega
+                            var nuevoEjercicio = new Ejercicio
+                            {
+                                Nombre = ejercicioRequest.Nombre,
+                                Descripcion = ejercicioRequest.Descripcion,
+                                Series = ejercicioRequest.Series,
+                                Repeticiones = ejercicioRequest.Repeticiones,
+                                ImagenUrl = ejercicioRequest.ImagenUrl
+                            };
+                            _context.Ejercicios.Add(nuevoEjercicio);
+                            await _context.SaveChangesAsync();
+
+                            // Crear la relación en EjercicioAgrupado
+                            var nuevoEjercicioAgrupado = new EjercicioAgrupado
+                            {
+                                AgrupacionId = agrupacionExistente.AgrupacionId,
+                                EjercicioId = nuevoEjercicio.EjercicioId
+                            };
+                            _context.EjercicioAgrupado.Add(nuevoEjercicioAgrupado);
+                        }
+                        else
+                        {
+                            // Si el ejercicio existe, se actualiza
+                            ejercicioExistente.Ejercicio.Series = ejercicioRequest.Series;
+                            ejercicioExistente.Ejercicio.Repeticiones = ejercicioRequest.Repeticiones;
+                            ejercicioExistente.Ejercicio.ImagenUrl = ejercicioRequest.ImagenUrl;
+                        }
+                    }
+
+                    // Eliminar ejercicios no presentes en la solicitud
+                    foreach (var ejercicioExistente in ejerciciosExistentes)
+                    {
+                        if (!agrupacionRequest.Ejercicios.Any(e => e.Nombre == ejercicioExistente.Ejercicio.Nombre))
+                        {
+                            _context.Ejercicios.Remove(ejercicioExistente.Ejercicio);
+                            _context.EjercicioAgrupado.Remove(ejercicioExistente);
+                        }
+                    }
                 }
-                else
+
+                // Eliminar agrupaciones no presentes en la solicitud
+                foreach (var agrupacionExistente in diaExistente.Agrupaciones.ToList())
                 {
-                    // Si el ejercicio existe, se actualiza
-                    ejercicioExistente.Ejercicio.Series = ejercicioRequest.Series;
-                    ejercicioExistente.Ejercicio.Repeticiones = ejercicioRequest.Repeticiones;
-                    ejercicioExistente.Ejercicio.ImagenUrl = ejercicioRequest.ImagenUrl;
+                    if (!diaRequest.Agrupaciones.Any(a => a.Tipo == agrupacionExistente.Tipo))
+                    {
+                        _context.Agrupaciones.Remove(agrupacionExistente);
+                    }
                 }
             }
 
-            // Eliminar ejercicios no presentes en la solicitud
-            foreach (var ejercicioExistente in ejerciciosExistentes)
+            // Eliminar días de entrenamiento no presentes en la solicitud
+            foreach (var diaExistente in rutina.DiasEntrenamiento.ToList())
             {
-                if (!agrupacionRequest.Ejercicios.Any(e => e.Nombre == ejercicioExistente.Ejercicio.Nombre))
+                if (!request.DiasEntrenamiento.Any(d => d.DiaSemana == diaExistente.DiaSemana))
                 {
-                    _context.Ejercicios.Remove(ejercicioExistente.Ejercicio);
-                    _context.EjercicioAgrupado.Remove(ejercicioExistente);
+                    _context.DiasEntrenamiento.Remove(diaExistente);
                 }
             }
-        }
 
-        // Eliminar agrupaciones no presentes en la solicitud
-        foreach (var agrupacionExistente in diaExistente.Agrupaciones.ToList())
-        {
-            if (!diaRequest.Agrupaciones.Any(a => a.Tipo == agrupacionExistente.Tipo))
-            {
-                _context.Agrupaciones.Remove(agrupacionExistente);
-            }
+            await _context.SaveChangesAsync();
+            return true;
         }
-    }
-
-    // Eliminar días de entrenamiento no presentes en la solicitud
-    foreach (var diaExistente in rutina.DiasEntrenamiento.ToList())
-    {
-        if (!request.DiasEntrenamiento.Any(d => d.DiaSemana == diaExistente.DiaSemana))
-        {
-            _context.DiasEntrenamiento.Remove(diaExistente);
-        }
-    }
-
-    await _context.SaveChangesAsync();
-    return true;
-}
 
 
         public async Task<bool> DeleteRutinaAsync(int rutinaId)
@@ -265,6 +273,6 @@ namespace webapi.Services
         Task<bool> DeleteRutinaAsync(int rutinaId);
         Task<Rutina> GetRutinaByIdAsync(int clienteId, int rutinaId);
         Task<Rutina> GetRutinaByIdAsync(int rutinaId);
-         Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId);
+        Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId);
     }
 }
