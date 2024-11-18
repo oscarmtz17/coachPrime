@@ -69,6 +69,11 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
+// Configura el logging para usar consola
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
