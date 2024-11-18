@@ -8,13 +8,13 @@ public class DietaController : ControllerBase
     private readonly IDietaService _dietaService;
     private readonly PdfService _pdfService;
 
-     public DietaController(IDietaService dietaService, PdfService pdfService)
+    public DietaController(IDietaService dietaService, PdfService pdfService)
     {
         _dietaService = dietaService;
         _pdfService = pdfService;
     }
 
-        // Endpoint para descargar el PDF de una dieta
+    // Endpoint para descargar el PDF de una dieta
     [HttpGet("{clienteId}/{dietaId}/pdf")]
     public async Task<IActionResult> DescargarDietaPdf(int clienteId, int dietaId)
     {
@@ -47,13 +47,25 @@ public class DietaController : ControllerBase
     }
 
     // POST: api/dieta/{clienteId} - Registrar una nueva dieta
-   [HttpPost("{clienteId}")]
-public async Task<IActionResult> RegistrarDieta(int clienteId, [FromBody] DietaRequest request)
-{
-    var result = await _dietaService.RegistrarDietaAsync(clienteId, request);
-    if (result) return Ok("Dieta registrada exitosamente.");
-    return BadRequest("Error al registrar la dieta.");
-}
+    [HttpPost("{clienteId}")]
+    public async Task<IActionResult> RegistrarDieta(int clienteId, [FromBody] DietaRequest request)
+    {
+        try
+        {
+            var result = await _dietaService.RegistrarDietaAsync(clienteId, request);
+            if (result) return Ok("Dieta registrada exitosamente.");
+            return BadRequest("Error al registrar la dieta.");
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Debes agregar al menos un alimento"))
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            return StatusCode(500, "Ocurrió un error inesperado.");
+        }
+    }
+
 
     // PUT: api/dieta/{clienteId}/{dietaId} - Actualizar una dieta
     [HttpPut("{clienteId}/{dietaId}")]

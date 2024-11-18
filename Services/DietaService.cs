@@ -35,6 +35,12 @@ public class DietaService : IDietaService
         var cliente = await _context.Clientes.FindAsync(clienteId);
         if (cliente == null) return false;
 
+        // Validar que haya al menos un alimento
+        if (!request.Comidas.Any(c => c.Alimentos.Any()))
+        {
+            throw new Exception("Debes agregar al menos un alimento a la dieta.");
+        }
+
         var dieta = new Dieta
         {
             ClienteId = clienteId,
@@ -58,87 +64,88 @@ public class DietaService : IDietaService
         return true;
     }
 
+
     // Actualizar una dieta existente
-public async Task<bool> UpdateDietaAsync(int clienteId, int dietaId, DietaRequest request)
-{
-    var dieta = await _context.Dietas
-        .Include(d => d.Comidas)
-            .ThenInclude(c => c.Alimentos)
-        .FirstOrDefaultAsync(d => d.ClienteId == clienteId && d.DietaId == dietaId);
-    
-    if (dieta == null) return false;
-
-    dieta.Nombre = request.Nombre;
-    dieta.Notas = request.Notas;
-
-    // Actualización de las comidas y alimentos
-    // 1. Eliminar comidas que no están en la solicitud
-    var comidasToDelete = dieta.Comidas.Where(c => !request.Comidas.Any(rc => rc.Nombre == c.Nombre)).ToList();
-    foreach (var comida in comidasToDelete)
+    public async Task<bool> UpdateDietaAsync(int clienteId, int dietaId, DietaRequest request)
     {
-        _context.Comidas.Remove(comida);
-    }
+        var dieta = await _context.Dietas
+            .Include(d => d.Comidas)
+                .ThenInclude(c => c.Alimentos)
+            .FirstOrDefaultAsync(d => d.ClienteId == clienteId && d.DietaId == dietaId);
 
-    // 2. Actualizar o agregar comidas de la solicitud
-    foreach (var comidaReq in request.Comidas)
-    {
-        var comidaActual = dieta.Comidas.FirstOrDefault(c => c.Nombre == comidaReq.Nombre);
-        
-        if (comidaActual != null)
+        if (dieta == null) return false;
+
+        dieta.Nombre = request.Nombre;
+        dieta.Notas = request.Notas;
+
+        // Actualización de las comidas y alimentos
+        // 1. Eliminar comidas que no están en la solicitud
+        var comidasToDelete = dieta.Comidas.Where(c => !request.Comidas.Any(rc => rc.Nombre == c.Nombre)).ToList();
+        foreach (var comida in comidasToDelete)
         {
-            // Actualizar comida existente
-            comidaActual.Hora = comidaReq.Hora;
+            _context.Comidas.Remove(comida);
+        }
 
-            // Eliminar alimentos que no están en la solicitud
-            var alimentosToDelete = comidaActual.Alimentos.Where(a => !comidaReq.Alimentos.Any(ra => ra.Nombre == a.Nombre)).ToList();
-            foreach (var alimento in alimentosToDelete)
-            {
-                _context.Alimentos.Remove(alimento);
-            }
+        // 2. Actualizar o agregar comidas de la solicitud
+        foreach (var comidaReq in request.Comidas)
+        {
+            var comidaActual = dieta.Comidas.FirstOrDefault(c => c.Nombre == comidaReq.Nombre);
 
-            // Actualizar o agregar alimentos
-            foreach (var alimentoReq in comidaReq.Alimentos)
+            if (comidaActual != null)
             {
-                var alimentoActual = comidaActual.Alimentos.FirstOrDefault(a => a.Nombre == alimentoReq.Nombre);
-                if (alimentoActual != null)
+                // Actualizar comida existente
+                comidaActual.Hora = comidaReq.Hora;
+
+                // Eliminar alimentos que no están en la solicitud
+                var alimentosToDelete = comidaActual.Alimentos.Where(a => !comidaReq.Alimentos.Any(ra => ra.Nombre == a.Nombre)).ToList();
+                foreach (var alimento in alimentosToDelete)
                 {
-                    // Actualizar alimento existente
-                    alimentoActual.Cantidad = alimentoReq.Cantidad;
-                    alimentoActual.Unidad = alimentoReq.Unidad;
+                    _context.Alimentos.Remove(alimento);
                 }
-                else
+
+                // Actualizar o agregar alimentos
+                foreach (var alimentoReq in comidaReq.Alimentos)
                 {
-                    // Agregar nuevo alimento
-                    comidaActual.Alimentos.Add(new Alimento
+                    var alimentoActual = comidaActual.Alimentos.FirstOrDefault(a => a.Nombre == alimentoReq.Nombre);
+                    if (alimentoActual != null)
                     {
-                        Nombre = alimentoReq.Nombre,
-                        Cantidad = alimentoReq.Cantidad,
-                        Unidad = alimentoReq.Unidad
-                    });
+                        // Actualizar alimento existente
+                        alimentoActual.Cantidad = alimentoReq.Cantidad;
+                        alimentoActual.Unidad = alimentoReq.Unidad;
+                    }
+                    else
+                    {
+                        // Agregar nuevo alimento
+                        comidaActual.Alimentos.Add(new Alimento
+                        {
+                            Nombre = alimentoReq.Nombre,
+                            Cantidad = alimentoReq.Cantidad,
+                            Unidad = alimentoReq.Unidad
+                        });
+                    }
                 }
             }
-        }
-        else
-        {
-            // Agregar nueva comida con sus alimentos
-            var nuevaComida = new Comida
+            else
             {
-                Nombre = comidaReq.Nombre,
-                Hora = comidaReq.Hora,
-                Alimentos = comidaReq.Alimentos.Select(a => new Alimento
+                // Agregar nueva comida con sus alimentos
+                var nuevaComida = new Comida
                 {
-                    Nombre = a.Nombre,
-                    Cantidad = a.Cantidad,
-                    Unidad = a.Unidad
-                }).ToList()
-            };
-            dieta.Comidas.Add(nuevaComida);
+                    Nombre = comidaReq.Nombre,
+                    Hora = comidaReq.Hora,
+                    Alimentos = comidaReq.Alimentos.Select(a => new Alimento
+                    {
+                        Nombre = a.Nombre,
+                        Cantidad = a.Cantidad,
+                        Unidad = a.Unidad
+                    }).ToList()
+                };
+                dieta.Comidas.Add(nuevaComida);
+            }
         }
-    }
 
-    await _context.SaveChangesAsync();
-    return true;
-}
+        await _context.SaveChangesAsync();
+        return true;
+    }
 
     // Eliminar una dieta
     public async Task<bool> DeleteDietaAsync(int clienteId, int dietaId)
