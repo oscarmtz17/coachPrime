@@ -107,17 +107,33 @@ namespace webapi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _rutinaService.UpdateRutinaAsync(id, request);
+            try
+            {
+                var result = await _rutinaService.UpdateRutinaAsync(id, request);
 
-            if (result)
-            {
-                return Ok("Rutina actualizada exitosamente.");
+                if (result)
+                {
+                    return Ok("Rutina actualizada exitosamente.");
+                }
+                else
+                {
+                    return NotFound("Rutina no encontrada.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return NotFound("Rutina no encontrada.");
+                // Validar si la excepción es por falta de ejercicios
+                if (ex.Message.Contains("Debes agregar al menos un ejercicio"))
+                {
+                    return BadRequest(new { error = ex.Message });
+                }
+
+                // Manejar otros errores inesperados
+                Console.Error.WriteLine($"Error en UpdateRutina: {ex.Message}");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
         }
+
 
         // DELETE: api/rutina/{id}
         [HttpDelete("{id}")]

@@ -127,6 +127,12 @@ namespace webapi.Services
 
         public async Task<bool> UpdateRutinaAsync(int rutinaId, CreateRutinaRequest request)
         {
+            // Validar que haya al menos un ejercicio en la solicitud
+            if (!request.DiasEntrenamiento.Any(d => d.Agrupaciones.Any(a => a.Ejercicios.Any())))
+            {
+                throw new Exception("Debes agregar al menos un ejercicio a tu rutina.");
+            }
+
             var rutina = await _context.Rutinas
                 .Include(r => r.DiasEntrenamiento)
                     .ThenInclude(d => d.Agrupaciones)
@@ -246,6 +252,7 @@ namespace webapi.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
 
 
         public async Task<bool> DeleteRutinaAsync(int rutinaId)
