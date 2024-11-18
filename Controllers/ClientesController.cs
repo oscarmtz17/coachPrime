@@ -23,10 +23,10 @@ public class ClienteController : ControllerBase
     {
         // Obtener el UsuarioId desde el token
         var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-if (usuarioIdClaim == null)
-{
-    return Unauthorized("Token inválido o falta el claim del UsuarioId.");
-}
+        if (usuarioIdClaim == null)
+        {
+            return Unauthorized("Token inválido o falta el claim del UsuarioId.");
+        }
 
         // Verificar que el UsuarioId se obtuvo correctamente y convertirlo a int
         if (!int.TryParse(usuarioIdClaim, out int usuarioId))
@@ -61,26 +61,26 @@ if (usuarioIdClaim == null)
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Cliente cliente)
     {
-var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-if (usuarioIdClaim == null)
-{
-    return Unauthorized("Token inválido o falta el claim del UsuarioId.");
-}
+        var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (usuarioIdClaim == null)
+        {
+            return Unauthorized("Token inválido o falta el claim del UsuarioId.");
+        }
 
-Console.WriteLine($"UsuarioIdClaim: {usuarioIdClaim}");
+        Console.WriteLine($"UsuarioIdClaim: {usuarioIdClaim}");
 
-if (!int.TryParse(usuarioIdClaim, out int usuarioId))
-{
-    return Unauthorized("Usuario no autorizado");
-}
+        if (!int.TryParse(usuarioIdClaim, out int usuarioId))
+        {
+            return Unauthorized("Usuario no autorizado");
+        }
 
-if (ModelState.IsValid)
-    {
-        cliente.UsuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);  // Asigna el UsuarioId desde el token
-        await clienteService.Save(cliente);
-        return Ok("Cliente creado exitosamente");
-    }
-    return BadRequest(ModelState);
+        if (ModelState.IsValid)
+        {
+            cliente.UsuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);  // Asigna el UsuarioId desde el token
+            await clienteService.Save(cliente);
+            return Ok("Cliente creado exitosamente");
+        }
+        return BadRequest(ModelState);
     }
 
     // Actualizar un cliente existente

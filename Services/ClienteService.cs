@@ -41,6 +41,7 @@ namespace webapi.Services
                 clienteActual.Apellido = cliente.Apellido;
                 clienteActual.Email = cliente.Email;
                 clienteActual.Telefono = cliente.Telefono;
+                clienteActual.Sexo = cliente.Sexo;
 
                 await context.SaveChangesAsync();
             }
