@@ -71,10 +71,22 @@ public class DietaController : ControllerBase
     [HttpPut("{clienteId}/{dietaId}")]
     public async Task<IActionResult> UpdateDieta(int clienteId, int dietaId, [FromBody] DietaRequest request)
     {
-        var result = await _dietaService.UpdateDietaAsync(clienteId, dietaId, request);
-        if (result) return Ok("Dieta actualizada exitosamente.");
-        return NotFound("Dieta no encontrada.");
+        try
+        {
+            var result = await _dietaService.UpdateDietaAsync(clienteId, dietaId, request);
+            if (result) return Ok("Dieta actualizada exitosamente.");
+            return NotFound("Dieta no encontrada.");
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Debes agregar al menos un alimento"))
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            return StatusCode(500, "Ocurrió un error inesperado.");
+        }
     }
+
 
     // DELETE: api/dieta/{clienteId}/{dietaId} - Eliminar una dieta
     [HttpDelete("{clienteId}/{dietaId}")]
