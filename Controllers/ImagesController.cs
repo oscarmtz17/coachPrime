@@ -77,14 +77,29 @@ public class ImagesController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("User ID not found.");
 
-        string uniqueIdentifier = Guid.NewGuid().ToString();
-        var extension = file.FileName.Split('.').Last();
-        var key = $"private/{userId}/logo/{uniqueIdentifier}_logo.{extension}";
+        try
+        {
+            // Eliminar logos existentes del usuario
+            var logoFolderKey = $"private/{userId}/logo/";
+            await _s3Service.DeleteFolderAsync(logoFolderKey);
 
-        using var stream = file.OpenReadStream();
-        var url = await _s3Service.UploadImageAsync(key, stream);
-        return Ok(new { Url = url });
+            // Subir el nuevo logo
+            string uniqueIdentifier = Guid.NewGuid().ToString();
+            var extension = file.FileName.Split('.').Last();
+            var key = $"{logoFolderKey}{uniqueIdentifier}_logo.{extension}";
+
+            using var stream = file.OpenReadStream();
+            var url = await _s3Service.UploadImageAsync(key, stream);
+
+            return Ok(new { Url = url });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error uploading logo for user {userId}: {ex.Message}");
+            return StatusCode(500, "Error uploading logo.");
+        }
     }
+
 
     [HttpGet("user-logo")]
     [Authorize]
