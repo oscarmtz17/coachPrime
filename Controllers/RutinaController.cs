@@ -38,13 +38,14 @@ namespace webapi.Controllers
         public async Task<IActionResult> DescargarRutinaPdf(int clienteId, int rutinaId)
         {
             var rutina = await _rutinaService.GetRutinaByIdAsync(clienteId, rutinaId);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
             if (rutina == null)
             {
                 return NotFound("Rutina no encontrada.");
             }
 
-            var pdfBytes = _pdfService.GenerarRutinaPdf(rutina);
+            var pdfBytes = _pdfService.GenerarRutinaPdf(rutina, userId);
             return File(pdfBytes, "application/pdf", $"Rutina_{rutina.Nombre}.pdf");
         }
 
