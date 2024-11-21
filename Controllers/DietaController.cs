@@ -25,9 +25,17 @@ public class DietaController : ControllerBase
             return NotFound("Dieta no encontrada.");
         }
 
-        var pdfBytes = _pdfService.GenerarDietaPdf(dieta);
+        // Obtener el userId del usuario autenticado
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("Usuario no autorizado.");
+        }
+
+        var pdfBytes = _pdfService.GenerarDietaPdf(dieta, userId);
         return File(pdfBytes, "application/pdf", $"Dieta_{dieta.Nombre}.pdf");
     }
+
 
     // GET: api/dieta/{clienteId} - Obtener todas las dietas de un cliente
     [HttpGet("{clienteId}")]
