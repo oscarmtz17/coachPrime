@@ -60,11 +60,21 @@ public class ImagesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ListCombinedImagesByCategory([FromQuery] string userId, [FromQuery] string category)
     {
-        var publicImages = await _s3Service.ListImagesByCategoryAsync(category);
-        var userImages = await _s3Service.ListUserImagesByCategoryAsync(userId, category);
-        var combinedImages = publicImages.Concat(userImages).ToList();
-        return Ok(combinedImages);
+        var publicImageKeys = await _s3Service.ListImageKeysByCategoryAsync(category);
+        var userImageKeys = await _s3Service.ListUserImageKeysByCategoryAsync(userId, category);
+
+        var combinedKeys = publicImageKeys.Concat(userImageKeys).ToList();
+
+        var imagesWithUrls = combinedKeys.Select(key => new
+        {
+            Key = key,
+            Url = _s3Service.GeneratePresignedUrl(key, TimeSpan.FromMinutes(60)) // Generar URLs válidas por 1 hora
+        });
+
+        return Ok(imagesWithUrls);
     }
+
+
 
     [HttpPost("upload-logo")]
     [Authorize]

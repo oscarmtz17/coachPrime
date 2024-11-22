@@ -30,7 +30,7 @@ public class S3Service
         return _s3Client.GetPreSignedURL(request);
     }
 
-    public async Task<List<string>> ListImagesByCategoryAsync(string category)
+    public async Task<List<(string Key, string Url)>> ListImagesByCategoryAsync(string category)
     {
         var request = new ListObjectsV2Request
         {
@@ -39,13 +39,16 @@ public class S3Service
         };
 
         var response = await _s3Client.ListObjectsV2Async(request);
-        var imageUrls = response.S3Objects
-            .Where(obj => !obj.Key.EndsWith("/"))
-            .Select(obj => GetPresignedUrl(obj.Key)) // Generamos una URL firmada
+
+        // Devolver tanto claves como URLs firmadas
+        var images = response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/")) // Ignorar carpetas
+            .Select(obj => (Key: obj.Key, Url: GetPresignedUrl(obj.Key))) // Combinar clave y URL firmada
             .ToList();
 
-        return imageUrls;
+        return images;
     }
+
 
     public async Task<List<string>> ListImagesAsync()
     {
@@ -161,6 +164,53 @@ public class S3Service
 
         return imageUrls;
     }
+
+    public async Task<List<string>> ListImageKeysByCategoryAsync(string category)
+    {
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            Prefix = $"{category}/"
+        };
+
+        var response = await _s3Client.ListObjectsV2Async(request);
+        var imageKeys = response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/")) // Ignorar carpetas
+            .Select(obj => obj.Key) // Retornar solo las claves
+            .ToList();
+
+        return imageKeys;
+    }
+
+    public async Task<List<string>> ListUserImageKeysByCategoryAsync(string userId, string category)
+    {
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            Prefix = $"private/{userId}/{category}/"
+        };
+
+        var response = await _s3Client.ListObjectsV2Async(request);
+        var imageKeys = response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/")) // Ignorar carpetas
+            .Select(obj => obj.Key) // Retornar solo las claves
+            .ToList();
+
+        return imageKeys;
+    }
+
+    public string GeneratePresignedUrl(string key, TimeSpan expiration)
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = _bucketName,
+            Key = key,
+            Expires = DateTime.UtcNow.Add(expiration)
+        };
+
+        return _s3Client.GetPreSignedURL(request);
+    }
+
 
 
 
