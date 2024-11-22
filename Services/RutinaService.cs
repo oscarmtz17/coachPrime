@@ -61,7 +61,7 @@ namespace webapi.Services
                                 Nombre = ejercicio.Nombre,
                                 Series = ejercicio.Series,
                                 Repeticiones = ejercicio.Repeticiones,
-                                ImagenUrl = ejercicio.ImagenUrl
+                                ImagenUrl = ejercicio.ImagenKey
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -197,7 +197,7 @@ namespace webapi.Services
                                 Descripcion = ejercicioRequest.Descripcion,
                                 Series = ejercicioRequest.Series,
                                 Repeticiones = ejercicioRequest.Repeticiones,
-                                ImagenUrl = ejercicioRequest.ImagenUrl
+                                ImagenUrl = ejercicioRequest.ImagenKey
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -215,7 +215,7 @@ namespace webapi.Services
                             // Si el ejercicio existe, se actualiza
                             ejercicioExistente.Ejercicio.Series = ejercicioRequest.Series;
                             ejercicioExistente.Ejercicio.Repeticiones = ejercicioRequest.Repeticiones;
-                            ejercicioExistente.Ejercicio.ImagenUrl = ejercicioRequest.ImagenUrl;
+                            ejercicioExistente.Ejercicio.ImagenUrl = ejercicioRequest.ImagenKey;
                         }
                     }
 
