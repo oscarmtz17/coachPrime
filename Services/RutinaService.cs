@@ -5,10 +5,12 @@ namespace webapi.Services
     public class RutinaService : IRutinaService
     {
         private readonly CoachPrimeContext _context;
+        private readonly S3Service _s3Service;
 
-        public RutinaService(CoachPrimeContext context)
+        public RutinaService(CoachPrimeContext context, S3Service s3Service)
         {
             _context = context;
+            _s3Service = s3Service;
         }
 
         public async Task<bool> CreateRutinaAsync(CreateRutinaRequest request)
@@ -61,7 +63,7 @@ namespace webapi.Services
                                 Nombre = ejercicio.Nombre,
                                 Series = ejercicio.Series,
                                 Repeticiones = ejercicio.Repeticiones,
-                                ImagenUrl = ejercicio.ImagenKey
+                                ImagenKey = ejercicio.ImagenKey // Almacenar la key en lugar de la URL
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -88,26 +90,102 @@ namespace webapi.Services
             }
         }
 
-
         public async Task<Rutina> GetRutinaByIdAsync(int clienteId, int rutinaId)
         {
-            return await _context.Rutinas
+            var rutina = await _context.Rutinas
                 .Include(r => r.DiasEntrenamiento)
                     .ThenInclude(d => d.Agrupaciones)
                         .ThenInclude(a => a.EjerciciosAgrupados)
                             .ThenInclude(ea => ea.Ejercicio)
                 .FirstOrDefaultAsync(r => r.ClienteId == clienteId && r.RutinaId == rutinaId);
+
+            if (rutina != null)
+            {
+                foreach (var dia in rutina.DiasEntrenamiento)
+                {
+                    foreach (var agrupacion in dia.Agrupaciones)
+                    {
+                        foreach (var ejercicioAgrupado in agrupacion.EjerciciosAgrupados)
+                        {
+                            var ejercicio = ejercicioAgrupado.Ejercicio;
+                            if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
+                            {
+                                ejercicio.ImagenKey = _s3Service.GetPresignedUrl(ejercicio.ImagenKey); // Generar URL firmada
+                            }
+                        }
+                    }
+                }
+            }
+
+            return rutina;
         }
 
         public async Task<Rutina> GetRutinaByIdAsync(int rutinaId)
         {
-            return await _context.Rutinas
+            var rutina = await _context.Rutinas
                 .Include(r => r.DiasEntrenamiento)
                     .ThenInclude(d => d.Agrupaciones)
                         .ThenInclude(a => a.EjerciciosAgrupados)
                             .ThenInclude(ea => ea.Ejercicio)
                 .FirstOrDefaultAsync(r => r.RutinaId == rutinaId);
+
+            if (rutina != null)
+            {
+                foreach (var dia in rutina.DiasEntrenamiento)
+                {
+                    foreach (var agrupacion in dia.Agrupaciones)
+                    {
+                        foreach (var ejercicioAgrupado in agrupacion.EjerciciosAgrupados)
+                        {
+                            var ejercicio = ejercicioAgrupado.Ejercicio;
+                            Console.WriteLine($"ImagenUrl antes de firmar: {ejercicio}");
+
+                            // Validamos que ImagenUrl contiene el Key y no una URL completa
+                            if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
+                            {
+                                ejercicio.ImagenKey = _s3Service.GetPresignedUrl(ejercicio.ImagenKey); // Generar la URL firmada
+                            }
+                        }
+                    }
+                }
+            }
+
+            return rutina;
         }
+
+        public async Task<Rutina> GetRutinaByIdAsyncWithoutPresigned(int rutinaId)
+        {
+            var rutina = await _context.Rutinas
+                .Include(r => r.DiasEntrenamiento)
+                    .ThenInclude(d => d.Agrupaciones)
+                        .ThenInclude(a => a.EjerciciosAgrupados)
+                            .ThenInclude(ea => ea.Ejercicio)
+                .FirstOrDefaultAsync(r => r.RutinaId == rutinaId);
+
+            if (rutina != null)
+            {
+                foreach (var dia in rutina.DiasEntrenamiento)
+                {
+                    foreach (var agrupacion in dia.Agrupaciones)
+                    {
+                        foreach (var ejercicioAgrupado in agrupacion.EjerciciosAgrupados)
+                        {
+                            var ejercicio = ejercicioAgrupado.Ejercicio;
+                            Console.WriteLine($"ImagenUrl antes de firmar: {ejercicio}");
+
+                            // Validamos que ImagenUrl contiene el Key y no una URL completa
+                            if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
+                            {
+                                ejercicio.ImagenKey = ejercicio.ImagenKey; // Generar la URL firmada
+                            }
+                        }
+                    }
+                }
+            }
+
+            return rutina;
+        }
+
 
         public async Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId)
         {
@@ -122,8 +200,6 @@ namespace webapi.Services
                 })
                 .ToListAsync();
         }
-
-
 
         public async Task<bool> UpdateRutinaAsync(int rutinaId, CreateRutinaRequest request)
         {
@@ -197,7 +273,7 @@ namespace webapi.Services
                                 Descripcion = ejercicioRequest.Descripcion,
                                 Series = ejercicioRequest.Series,
                                 Repeticiones = ejercicioRequest.Repeticiones,
-                                ImagenUrl = ejercicioRequest.ImagenKey
+                                ImagenKey = ejercicioRequest.ImagenKey
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -215,7 +291,7 @@ namespace webapi.Services
                             // Si el ejercicio existe, se actualiza
                             ejercicioExistente.Ejercicio.Series = ejercicioRequest.Series;
                             ejercicioExistente.Ejercicio.Repeticiones = ejercicioRequest.Repeticiones;
-                            ejercicioExistente.Ejercicio.ImagenUrl = ejercicioRequest.ImagenKey;
+                            ejercicioExistente.Ejercicio.ImagenKey = ejercicioRequest.ImagenKey;
                         }
                     }
 
@@ -253,8 +329,6 @@ namespace webapi.Services
             return true;
         }
 
-
-
         public async Task<bool> DeleteRutinaAsync(int rutinaId)
         {
             var rutina = await _context.Rutinas
@@ -280,6 +354,7 @@ namespace webapi.Services
         Task<bool> DeleteRutinaAsync(int rutinaId);
         Task<Rutina> GetRutinaByIdAsync(int clienteId, int rutinaId);
         Task<Rutina> GetRutinaByIdAsync(int rutinaId);
+        Task<Rutina> GetRutinaByIdAsyncWithoutPresigned(int rutinaId);
         Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId);
     }
 }

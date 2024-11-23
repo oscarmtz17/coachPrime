@@ -5,5 +5,5 @@ public class Ejercicio
     public string? Descripcion { get; set; }
     public int Series { get; set; }
     public int Repeticiones { get; set; }
-     public string? ImagenUrl { get; set; }  // URL de la imagen del ejercicio
+    public string? ImagenKey { get; set; }  // Key de la imagen en S3
 }

@@ -242,11 +242,11 @@ namespace webapi.Services
                         // Imagen del ejercicio o espacio reservado
                         try
                         {
-                            if (!string.IsNullOrEmpty(ejercicio.ImagenUrl))
+                            if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
                             {
                                 using (var client = new WebClient())
                                 {
-                                    byte[] imageBytes = client.DownloadData(ejercicio.ImagenUrl);
+                                    byte[] imageBytes = client.DownloadData(ejercicio.ImagenKey);
                                     using (MemoryStream ms = new MemoryStream(imageBytes))
                                     {
                                         XImage image = XImage.FromStream(() => ms);

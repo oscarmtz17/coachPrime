@@ -10,11 +10,13 @@ namespace webapi.Controllers
     {
         private readonly IRutinaService _rutinaService;
         private readonly PdfService _pdfService;
+        private readonly S3Service _s3Service;
 
-        public RutinaController(IRutinaService rutinaService, PdfService pdfService)
+        public RutinaController(IRutinaService rutinaService, PdfService pdfService, S3Service s3Service)
         {
             _rutinaService = rutinaService;
             _pdfService = pdfService;
+            _s3Service = s3Service;
         }
 
         // GET: api/rutina/cliente/{clienteId}
@@ -30,8 +32,6 @@ namespace webapi.Controllers
 
             return NotFound("No se encontraron rutinas para este cliente.");
         }
-
-
 
         // Endpoint para descargar el PDF de una rutina
         [HttpGet("{clienteId}/{rutinaId}/pdf")]
@@ -83,21 +83,43 @@ namespace webapi.Controllers
             }
         }
 
-
-
         // GET: api/rutina/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRutinaById(int id)
         {
-            var rutina = await _rutinaService.GetRutinaByIdAsync(id); // Ajustado a usar 1 parámetro
+            var rutina = await _rutinaService.GetRutinaByIdAsyncWithoutPresigned(id);
 
             if (rutina != null)
             {
+                // Generar URLs firmadas para las imágenes antes de devolver la rutina
+                foreach (var dia in rutina.DiasEntrenamiento)
+                {
+                    foreach (var agrupacion in dia.Agrupaciones)
+                    {
+                        foreach (var ejercicioAgrupado in agrupacion.EjerciciosAgrupados)
+                        {
+                            var ejercicio = ejercicioAgrupado.Ejercicio;
+
+                            if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
+                            {
+                                // Log temporal para verificar el Key obtenido de la base de datos
+                                Console.WriteLine($"ImagenUrl antes de firmar: {ejercicio.ImagenKey}");
+
+
+                                // Genera la URL firmada
+                                ejercicio.ImagenKey = _s3Service.GetPresignedUrl(ejercicio.ImagenKey);
+                            }
+                        }
+                    }
+                }
+
                 return Ok(rutina);
             }
 
             return NotFound("Rutina no encontrada.");
         }
+
+
 
         // PUT: api/rutina/{id}
         [HttpPut("{id}")]
@@ -134,7 +156,6 @@ namespace webapi.Controllers
                 return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
         }
-
 
         // DELETE: api/rutina/{id}
         [HttpDelete("{id}")]
