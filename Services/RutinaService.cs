@@ -171,12 +171,11 @@ namespace webapi.Services
                         foreach (var ejercicioAgrupado in agrupacion.EjerciciosAgrupados)
                         {
                             var ejercicio = ejercicioAgrupado.Ejercicio;
-                            Console.WriteLine($"ImagenUrl antes de firmar: {ejercicio}");
 
-                            // Validamos que ImagenUrl contiene el Key y no una URL completa
                             if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
                             {
-                                ejercicio.ImagenKey = ejercicio.ImagenKey; // Generar la URL firmada
+                                // Conservar la key en ImagenKey
+                                ejercicio.ImagenUrl = _s3Service.GetPresignedUrl(ejercicio.ImagenKey); // Generar URL firmada
                             }
                         }
                     }
@@ -185,6 +184,8 @@ namespace webapi.Services
 
             return rutina;
         }
+
+
 
 
         public async Task<List<RutinaBasicInfo>> GetRutinasByClienteIdAsync(int clienteId)
@@ -260,6 +261,7 @@ namespace webapi.Services
 
                     // Actualizar ejercicios en cada agrupación
                     var ejerciciosExistentes = agrupacionExistente.EjerciciosAgrupados.ToList();
+                    // Actualizar ejercicios en cada agrupación
                     foreach (var ejercicioRequest in agrupacionRequest.Ejercicios)
                     {
                         var ejercicioExistente = ejerciciosExistentes.FirstOrDefault(e => e.Ejercicio.Nombre == ejercicioRequest.Nombre);
@@ -273,7 +275,7 @@ namespace webapi.Services
                                 Descripcion = ejercicioRequest.Descripcion,
                                 Series = ejercicioRequest.Series,
                                 Repeticiones = ejercicioRequest.Repeticiones,
-                                ImagenKey = ejercicioRequest.ImagenKey
+                                ImagenKey = ejercicioRequest.ImagenKey // Asegurar que solo se guarda la Key
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -291,9 +293,10 @@ namespace webapi.Services
                             // Si el ejercicio existe, se actualiza
                             ejercicioExistente.Ejercicio.Series = ejercicioRequest.Series;
                             ejercicioExistente.Ejercicio.Repeticiones = ejercicioRequest.Repeticiones;
-                            ejercicioExistente.Ejercicio.ImagenKey = ejercicioRequest.ImagenKey;
+                            ejercicioExistente.Ejercicio.ImagenKey = ejercicioRequest.ImagenKey; // Solo actualizar la Key
                         }
                     }
+
 
                     // Eliminar ejercicios no presentes en la solicitud
                     foreach (var ejercicioExistente in ejerciciosExistentes)
@@ -345,6 +348,7 @@ namespace webapi.Services
 
             return false;
         }
+
     }
 
     public interface IRutinaService

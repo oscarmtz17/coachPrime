@@ -102,12 +102,11 @@ namespace webapi.Controllers
 
                             if (!string.IsNullOrEmpty(ejercicio.ImagenKey))
                             {
-                                // Log temporal para verificar el Key obtenido de la base de datos
-                                Console.WriteLine($"ImagenUrl antes de firmar: {ejercicio.ImagenKey}");
+                                // Generar y asignar la URL firmada al campo ImagenUrl
+                                ejercicio.ImagenUrl = _s3Service.GetPresignedUrl(ejercicio.ImagenKey);
 
+                                // Mantener la key original en ImagenKey
 
-                                // Genera la URL firmada
-                                ejercicio.ImagenKey = _s3Service.GetPresignedUrl(ejercicio.ImagenKey);
                             }
                         }
                     }
@@ -118,6 +117,7 @@ namespace webapi.Controllers
 
             return NotFound("Rutina no encontrada.");
         }
+
 
 
 
@@ -132,6 +132,23 @@ namespace webapi.Controllers
 
             try
             {
+                // Asegurarse de que los datos recibidos contienen solo ImagenKey
+                foreach (var dia in request.DiasEntrenamiento)
+                {
+                    foreach (var agrupacion in dia.Agrupaciones)
+                    {
+                        foreach (var ejercicio in agrupacion.Ejercicios)
+                        {
+                            Console.WriteLine($"ImagenKey: {ejercicio.ImagenKey} ");
+                            // Validar que solo `ImagenKey` esté presente
+                            if (string.IsNullOrEmpty(ejercicio.ImagenKey))
+                            {
+                                return BadRequest(new { error = "La Key de la imagen es requerida para cada ejercicio." });
+                            }
+                        }
+                    }
+                }
+
                 var result = await _rutinaService.UpdateRutinaAsync(id, request);
 
                 if (result)
@@ -156,6 +173,7 @@ namespace webapi.Controllers
                 return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
         }
+
 
         // DELETE: api/rutina/{id}
         [HttpDelete("{id}")]

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 public class Ejercicio
 {
     public int EjercicioId { get; set; }
@@ -6,4 +8,7 @@ public class Ejercicio
     public int Series { get; set; }
     public int Repeticiones { get; set; }
     public string? ImagenKey { get; set; }  // Key de la imagen en S3
+    [NotMapped]
+    public string? ImagenUrl { get; set; }  // Key de la imagen en S3
+
 }
