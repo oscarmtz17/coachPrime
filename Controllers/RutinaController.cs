@@ -132,22 +132,8 @@ namespace webapi.Controllers
 
             try
             {
-                // Asegurarse de que los datos recibidos contienen solo ImagenKey
-                foreach (var dia in request.DiasEntrenamiento)
-                {
-                    foreach (var agrupacion in dia.Agrupaciones)
-                    {
-                        foreach (var ejercicio in agrupacion.Ejercicios)
-                        {
-                            Console.WriteLine($"ImagenKey: {ejercicio.ImagenKey} ");
-                            // Validar que solo `ImagenKey` esté presente
-                            if (string.IsNullOrEmpty(ejercicio.ImagenKey))
-                            {
-                                return BadRequest(new { error = "La Key de la imagen es requerida para cada ejercicio." });
-                            }
-                        }
-                    }
-                }
+                // Eliminar la validación que requiere que ImagenKey esté presente
+                // Se permite que ImagenKey sea opcional para cada ejercicio
 
                 var result = await _rutinaService.UpdateRutinaAsync(id, request);
 
@@ -173,6 +159,7 @@ namespace webapi.Controllers
                 return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
         }
+
 
 
         // DELETE: api/rutina/{id}

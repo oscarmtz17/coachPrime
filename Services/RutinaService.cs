@@ -275,7 +275,7 @@ namespace webapi.Services
                                 Descripcion = ejercicioRequest.Descripcion,
                                 Series = ejercicioRequest.Series,
                                 Repeticiones = ejercicioRequest.Repeticiones,
-                                ImagenKey = ejercicioRequest.ImagenKey // Asegurar que solo se guarda la Key
+                                ImagenKey = string.IsNullOrWhiteSpace(ejercicioRequest.ImagenKey) ? null : ejercicioRequest.ImagenKey // Permitir null si no hay imagen
                             };
                             _context.Ejercicios.Add(nuevoEjercicio);
                             await _context.SaveChangesAsync();
@@ -293,10 +293,9 @@ namespace webapi.Services
                             // Si el ejercicio existe, se actualiza
                             ejercicioExistente.Ejercicio.Series = ejercicioRequest.Series;
                             ejercicioExistente.Ejercicio.Repeticiones = ejercicioRequest.Repeticiones;
-                            ejercicioExistente.Ejercicio.ImagenKey = ejercicioRequest.ImagenKey; // Solo actualizar la Key
+                            ejercicioExistente.Ejercicio.ImagenKey = string.IsNullOrWhiteSpace(ejercicioRequest.ImagenKey) ? null : ejercicioRequest.ImagenKey; // Permitir null si no hay imagen
                         }
                     }
-
 
                     // Eliminar ejercicios no presentes en la solicitud
                     foreach (var ejercicioExistente in ejerciciosExistentes)
