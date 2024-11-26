@@ -34,6 +34,8 @@ builder.Services.AddScoped<IProgresoService, ProgresoService>();
 builder.Services.AddScoped<IDietaService, DietaService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<S3Service>();
+builder.Services.AddTransient<EmailService>();
+
 
 // Añadir autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

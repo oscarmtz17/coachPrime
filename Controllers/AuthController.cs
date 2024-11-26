@@ -16,34 +16,37 @@ namespace webapi.Controllers
         private readonly IConfiguration _configuration;
         private readonly IUsuarioService _usuarioService;
 
-        public AuthController(IConfiguration configuration, IUsuarioService usuarioService)
+        private readonly EmailService _emailService;
+
+        public AuthController(IConfiguration configuration, IUsuarioService usuarioService, EmailService emailService)
         {
             _configuration = configuration;
             _usuarioService = usuarioService;
+            _emailService = emailService;
         }
 
-[HttpPost("login")]
-public IActionResult Login([FromBody] LoginRequest loginRequest)
-{
-    var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
-    if (user == null)
-    {
-        return Unauthorized("Credenciales incorrectas");
-    }
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest loginRequest)
+        {
+            var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
+            if (user == null)
+            {
+                return Unauthorized("Credenciales incorrectas");
+            }
 
-    // if (!user.EmailVerificado)
-    // {
-    //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
-    // }
+            // if (!user.EmailVerificado)
+            // {
+            //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+            // }
 
-    var token = GenerateJwtToken(user);
-    var refreshToken = GenerateRefreshToken();
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
 
-    _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
+            _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
 
-    // Incluye el `userId` en la respuesta
-    return Ok(new { userId = user.UsuarioId, token, refreshToken });
-}
+            // Incluye el `userId` en la respuesta
+            return Ok(new { userId = user.UsuarioId, token, refreshToken });
+        }
 
 
         [HttpPost("refresh")]
@@ -70,7 +73,7 @@ public IActionResult Login([FromBody] LoginRequest loginRequest)
         }
 
         [HttpPost("forgot-password")]
-        public IActionResult ForgotPassword([FromBody] ForgotPasswordRequest request)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
             var user = _usuarioService.GetUserByEmail(request.Email);
             if (user == null)
@@ -80,10 +83,12 @@ public IActionResult Login([FromBody] LoginRequest loginRequest)
 
             var resetToken = GenerateResetToken();
             _usuarioService.SavePasswordResetToken(user.UsuarioId, resetToken);
-            SendPasswordResetEmail(user.Email, resetToken);
 
-            return Ok(new { message = "Se ha enviado un enlace de recuperación de contraseña a su correo electrónico.", token = resetToken });
+            await _emailService.SendPasswordResetEmail(user.Email, resetToken);
+
+            return Ok(new { message = "Se ha enviado un enlace de recuperación de contraseña a su correo electrónico." });
         }
+
 
         [HttpPost("reset-password")]
         public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
@@ -109,58 +114,58 @@ public IActionResult Login([FromBody] LoginRequest loginRequest)
             return Ok("Su contraseña ha sido actualizada exitosamente.");
         }
 
-[HttpPost("verify-email")]
-public IActionResult VerifyEmail([FromBody] VerifyEmailRequest request)
-{
-    var user = _usuarioService.GetUserByVerificationToken(request.Token);
-    if (user == null)
-    {
-        return BadRequest("Token inválido.");
-    }
+        [HttpPost("verify-email")]
+        public IActionResult VerifyEmail([FromBody] VerifyEmailRequest request)
+        {
+            var user = _usuarioService.GetUserByVerificationToken(request.Token);
+            if (user == null)
+            {
+                return BadRequest("Token inválido.");
+            }
 
-    user.EmailVerificado = true;
-    user.EmailVerificationToken = null; // Limpiamos el token tras la verificación
-    _usuarioService.Update(user.UsuarioId, user);
+            user.EmailVerificado = true;
+            user.EmailVerificationToken = null; // Limpiamos el token tras la verificación
+            _usuarioService.Update(user.UsuarioId, user);
 
-    return Ok("Correo verificado exitosamente.");
-}
+            return Ok("Correo verificado exitosamente.");
+        }
 
 
-      [HttpPost("register")]
-public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-{
-    var userExistsEmail = _usuarioService.GetUserByEmail(request.Email);
-    if (userExistsEmail != null)
-    {
-        return BadRequest("El correo ya está registrado.");
-    }
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            var userExistsEmail = _usuarioService.GetUserByEmail(request.Email);
+            if (userExistsEmail != null)
+            {
+                return BadRequest("El correo ya está registrado.");
+            }
 
-    var userExistsPhone = _usuarioService.GetUserByPhone(request.Phone);
-    if (userExistsPhone != null)
-    {
-        return BadRequest("El número de teléfono ya está registrado.");
-    }
+            var userExistsPhone = _usuarioService.GetUserByPhone(request.Phone);
+            if (userExistsPhone != null)
+            {
+                return BadRequest("El número de teléfono ya está registrado.");
+            }
 
-    // Crear nuevo usuario
-    var newUser = new Usuario
-    {
-        Nombre = request.Nombre,
-        Apellido = request.Apellido,
-        Email = request.Email,
-        Password = request.Password,
-        Phone = request.Phone,
-        Rol = "Usuario", // Asignamos un rol predeterminado
-        EmailVerificationToken = GenerateVerificationToken(),
-        EmailVerificado = false // El correo no está verificado al principio
-    };
+            // Crear nuevo usuario
+            var newUser = new Usuario
+            {
+                Nombre = request.Nombre,
+                Apellido = request.Apellido,
+                Email = request.Email,
+                Password = request.Password,
+                Phone = request.Phone,
+                Rol = "Usuario", // Asignamos un rol predeterminado
+                EmailVerificationToken = GenerateVerificationToken(),
+                EmailVerificado = false // El correo no está verificado al principio
+            };
 
-    await _usuarioService.Save(newUser);
+            await _usuarioService.Save(newUser);
 
-    // Enviar correo de verificación
-    SendVerificationEmail(newUser.Email, newUser.EmailVerificationToken);
+            // Enviar correo de verificación
+            SendVerificationEmail(newUser.Email, newUser.EmailVerificationToken);
 
-    return Ok("Usuario registrado exitosamente. Por favor, verifique su correo electrónico.");
-}
+            return Ok("Usuario registrado exitosamente. Por favor, verifique su correo electrónico.");
+        }
 
 
 
@@ -247,7 +252,7 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
             var message = $"Haga clic en el siguiente enlace para verificar su correo electrónico: {verificationLink}";
         }
 
-                // Endpoint para obtener el usuario actual
+        // Endpoint para obtener el usuario actual
         [HttpGet("current-user")]
         [Authorize]
         public IActionResult GetCurrentUser()
@@ -279,56 +284,56 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         }
 
         [HttpPost("change-password")]
-[Authorize]
-public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
-{
-    // Obtener el ID del usuario desde el token de autenticación
-    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-    if (userIdClaim == null)
-    {
-        return Unauthorized();
-    }
+        [Authorize]
+        public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            // Obtener el ID del usuario desde el token de autenticación
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
 
-    int userId = int.Parse(userIdClaim.Value);
-    var user = _usuarioService.GetUserById(userId);
+            int userId = int.Parse(userIdClaim.Value);
+            var user = _usuarioService.GetUserById(userId);
 
-    if (user == null)
-    {
-        return NotFound("Usuario no encontrado.");
-    }
+            if (user == null)
+            {
+                return NotFound("Usuario no encontrado.");
+            }
 
-    // Verificar que la contraseña actual sea correcta
-    if (!_usuarioService.ValidateUserPassword(user.UsuarioId, request.CurrentPassword))
+            // Verificar que la contraseña actual sea correcta
+            if (!_usuarioService.ValidateUserPassword(user.UsuarioId, request.CurrentPassword))
 
-    {
-        return BadRequest("La contraseña actual es incorrecta.");
-    }
+            {
+                return BadRequest("La contraseña actual es incorrecta.");
+            }
 
-    // Verificar que la nueva contraseña cumpla con los requisitos de seguridad
-    if (!_usuarioService.IsPasswordSecure(request.NewPassword))
-    {
-        return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad. Asegúrate de que:\n" +
-                  "- Tenga al menos 8 caracteres.\n" +
-                  "- Contenga al menos una letra mayúscula.\n" +
-                  "- Contenga al menos una letra minúscula.\n" +
-                  "- Contenga al menos un número.\n" +
-                  "- Incluya al menos un carácter especial (por ejemplo: !@#$%^&*).");
+            // Verificar que la nueva contraseña cumpla con los requisitos de seguridad
+            if (!_usuarioService.IsPasswordSecure(request.NewPassword))
+            {
+                return BadRequest("La nueva contraseña no cumple con los requisitos de seguridad. Asegúrate de que:\n" +
+                          "- Tenga al menos 8 caracteres.\n" +
+                          "- Contenga al menos una letra mayúscula.\n" +
+                          "- Contenga al menos una letra minúscula.\n" +
+                          "- Contenga al menos un número.\n" +
+                          "- Incluya al menos un carácter especial (por ejemplo: !@#$%^&*).");
 
-    }
+            }
 
-    // Actualizar la contraseña
-    _usuarioService.UpdatePassword(user.UsuarioId, request.NewPassword);
+            // Actualizar la contraseña
+            _usuarioService.UpdatePassword(user.UsuarioId, request.NewPassword);
 
-    return Ok("Su contraseña ha sido actualizada exitosamente.");
-}
+            return Ok("Su contraseña ha sido actualizada exitosamente.");
+        }
 
     }
 
     public class ChangePasswordRequest
-{
-    public string CurrentPassword { get; set; }
-    public string NewPassword { get; set; }
-}
+    {
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
+    }
 
     public class TokenRequest
     {
