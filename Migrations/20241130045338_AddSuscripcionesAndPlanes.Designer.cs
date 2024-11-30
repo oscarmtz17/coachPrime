@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -11,9 +12,11 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(CoachPrimeContext))]
-    partial class TareasContextModelSnapshot : ModelSnapshot
+    [Migration("20241130045338_AddSuscripcionesAndPlanes")]
+    partial class AddSuscripcionesAndPlanes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,29 +247,6 @@ namespace webapi.Migrations
                     b.ToTable("EjercicioAgrupado");
                 });
 
-            modelBuilder.Entity("EstadoSuscripcion", b =>
-                {
-                    b.Property<int>("EstadoSuscripcionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EstadoSuscripcionId"));
-
-                    b.Property<string>("Descripcion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("EsFinal")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("NombreEstado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("EstadoSuscripcionId");
-
-                    b.ToTable("EstadoSuscripcion");
-                });
-
             modelBuilder.Entity("Plan", b =>
                 {
                     b.Property<int>("PlanId")
@@ -285,9 +265,6 @@ namespace webapi.Migrations
                     b.Property<string>("Frecuencia")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("MaxClientes")
-                        .HasColumnType("int");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -432,13 +409,14 @@ namespace webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SuscripcionId"));
 
-                    b.Property<int>("EstadoSuscripcionId")
-                        .HasColumnType("int");
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("FechaCancelacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("FechaFin")
+                    b.Property<DateTime>("FechaFin")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaInicio")
@@ -454,8 +432,6 @@ namespace webapi.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("SuscripcionId");
-
-                    b.HasIndex("EstadoSuscripcionId");
 
                     b.HasIndex("PlanId");
 
@@ -642,12 +618,6 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("Suscripcion", b =>
                 {
-                    b.HasOne("EstadoSuscripcion", "EstadoSuscripcion")
-                        .WithMany()
-                        .HasForeignKey("EstadoSuscripcionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Plan", "Plan")
                         .WithMany()
                         .HasForeignKey("PlanId")
@@ -659,8 +629,6 @@ namespace webapi.Migrations
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("EstadoSuscripcion");
 
                     b.Navigation("Plan");
 

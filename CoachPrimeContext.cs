@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi;
 
-public class CoachPrimeContext: DbContext
+public class CoachPrimeContext : DbContext
 {
-    public CoachPrimeContext(DbContextOptions<CoachPrimeContext> options) :base(options) { }
+    public CoachPrimeContext(DbContextOptions<CoachPrimeContext> options) : base(options) { }
 
     public DbSet<Cliente> Clientes { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
@@ -20,7 +20,7 @@ public class CoachPrimeContext: DbContext
     public DbSet<Comida> Comidas { get; set; }
     public DbSet<Alimento> Alimentos { get; set; }
 
-     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,5 +58,17 @@ public class CoachPrimeContext: DbContext
             .WithMany(u => u.RefreshTokens)
             .HasForeignKey(rt => rt.UsuarioId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Relación Usuario - Suscripciones
+        modelBuilder.Entity<Suscripcion>()
+            .HasOne(s => s.Usuario)
+            .WithMany(u => u.Suscripciones)
+            .HasForeignKey(s => s.UsuarioId);
+
+        // Relación Plan - Suscripciones
+        modelBuilder.Entity<Suscripcion>()
+            .HasOne(s => s.Plan)
+            .WithMany()
+            .HasForeignKey(s => s.PlanId);
     }
 }
