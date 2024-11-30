@@ -7,6 +7,7 @@ using Amazon.Runtime;
 using System.Text;
 using Microsoft.AspNetCore.Cors;
 using Amazon.Extensions.NETCore.Setup;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +75,8 @@ builder.Services.AddCors(options =>
 // Configura el logging para usar consola
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
+StripeConfiguration.ApiKey = builder.Configuration["Stripe: SecretKey"];
 
 
 var app = builder.Build();
