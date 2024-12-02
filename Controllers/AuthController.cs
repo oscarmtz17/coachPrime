@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Text;
 using webapi.Models;
 using webapi.Services;
+using Stripe;
+using Stripe.Checkout;
 
 namespace webapi.Controllers
 {
@@ -15,14 +17,16 @@ namespace webapi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IUsuarioService _usuarioService;
-
         private readonly EmailService _emailService;
+        private readonly ISuscripcionService _suscripcionService;
 
-        public AuthController(IConfiguration configuration, IUsuarioService usuarioService, EmailService emailService)
+        public AuthController(IConfiguration configuration, IUsuarioService usuarioService, EmailService emailService, ISuscripcionService suscripcionService)
         {
             _configuration = configuration;
+            StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
             _usuarioService = usuarioService;
             _emailService = emailService;
+            _suscripcionService = suscripcionService;
         }
 
         [HttpPost("login")]
@@ -134,19 +138,21 @@ namespace webapi.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
+            // Validar si el email ya está registrado
             var userExistsEmail = _usuarioService.GetUserByEmail(request.Email);
             if (userExistsEmail != null)
             {
                 return BadRequest("El correo ya está registrado.");
             }
 
+            // Validar si el teléfono ya está registrado
             var userExistsPhone = _usuarioService.GetUserByPhone(request.Phone);
             if (userExistsPhone != null)
             {
                 return BadRequest("El número de teléfono ya está registrado.");
             }
 
-            // Crear nuevo usuario
+            // Crear un nuevo usuario
             var newUser = new Usuario
             {
                 Nombre = request.Nombre,
@@ -154,18 +160,77 @@ namespace webapi.Controllers
                 Email = request.Email,
                 Password = request.Password,
                 Phone = request.Phone,
-                Rol = "Usuario", // Asignamos un rol predeterminado
+                Rol = "Usuario", // Rol predeterminado
                 EmailVerificationToken = GenerateVerificationToken(),
-                EmailVerificado = false // El correo no está verificado al principio
+                EmailVerificado = false // El correo no está verificado al inicio
             };
 
             await _usuarioService.Save(newUser);
 
-            // Enviar correo de verificación
-            SendVerificationEmail(newUser.Email, newUser.EmailVerificationToken);
+            // Crear la suscripción en la base de datos
+            var newSubscription = new Suscripcion
+            {
+                UsuarioId = newUser.UsuarioId,
+                PlanId = request.PlanId,
+                FechaInicio = DateTime.Now,
+                EstadoSuscripcionId = (request.PlanId == 1)
+                    ? 7 // Estado Prueba (en este caso para planes gratuitos)
+                    : 1 // Estado Pendiente para planes de pago
+            };
 
-            return Ok("Usuario registrado exitosamente. Por favor, verifique su correo electrónico.");
+            await _suscripcionService.Save(newSubscription);
+
+            // Si es un plan gratuito, registrar y devolver éxito
+            if (request.PlanId == 1)
+            {
+                SendVerificationEmail(newUser.Email, newUser.EmailVerificationToken);
+                return Ok(new { message = "Usuario registrado exitosamente." });
+            }
+
+            // Para planes de pago, generar sesión de Stripe Checkout
+            var domain = "http://localhost:3000"; // Cambia al dominio de tu frontend
+            var planStripePriceId = GetStripePriceId(request.PlanId);
+
+            var options = new SessionCreateOptions
+            {
+                PaymentMethodTypes = new List<string> { "card" },
+                LineItems = new List<SessionLineItemOptions>
+        {
+            new SessionLineItemOptions
+            {
+                Price = planStripePriceId, // ID del plan en Stripe
+                Quantity = 1,
+            },
+        },
+                Mode = "subscription",
+                SuccessUrl = $"{domain}/success",
+                CancelUrl = $"{domain}/cancel",
+                Metadata = new Dictionary<string, string>
+        {
+            { "userId", newUser.UsuarioId.ToString() },
+            { "subscriptionId", newSubscription.SuscripcionId.ToString() }
         }
+            };
+
+            var service = new SessionService();
+            var session = service.Create(options);
+
+            return Ok(new { checkoutUrl = session.Url });
+        }
+
+
+        // Método auxiliar para obtener el ID del precio de Stripe
+        private string GetStripePriceId(int planId)
+        {
+            return planId switch
+            {
+                2 => "price_1QR94gBZAdKqouiVj2rqIAq1",
+                3 => "price_1QQKUQBZAdKqouiVDK0jLr25",
+                4 => "price_1QR97hBZAdKqouiVKf5WRxMl",
+                _ => throw new ArgumentException("Plan no válido."),
+            };
+        }
+
 
 
 
@@ -364,5 +429,7 @@ namespace webapi.Controllers
         public string Email { get; set; }
         public string Password { get; set; }
         public string? Phone { get; set; }
+
+        public int PlanId { get; set; }
     }
 }

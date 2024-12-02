@@ -28,15 +28,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSqlServer<CoachPrimeContext>("Data Source=LAPTOP-NTB0BH1O\\MSSQLSERVERAPP; Initial Catalog=CoachPrimeDB; user id=sa; password=P@ssw0rd; TrustServerCertificate=True");
+
+// Registro de servicios
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRutinaService, RutinaService>();
 builder.Services.AddScoped<IProgresoService, ProgresoService>();
 builder.Services.AddScoped<IDietaService, DietaService>();
+builder.Services.AddScoped<ISuscripcionService, SuscripcionService>(); // Registro del servicio de suscripciones
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<S3Service>();
 builder.Services.AddTransient<EmailService>();
-
 
 // Añadir autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -76,8 +78,8 @@ builder.Services.AddCors(options =>
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
+// Configuración de Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe: SecretKey"];
-
 
 var app = builder.Build();
 
@@ -90,6 +92,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
+
 // Habilitar autenticación
 app.UseAuthentication();
 app.UseAuthorization();

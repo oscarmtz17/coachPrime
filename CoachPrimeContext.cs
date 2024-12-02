@@ -21,6 +21,7 @@ public class CoachPrimeContext : DbContext
     public DbSet<Alimento> Alimentos { get; set; }
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Suscripcion> Suscripcion { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,5 +71,7 @@ public class CoachPrimeContext : DbContext
             .HasOne(s => s.Plan)
             .WithMany()
             .HasForeignKey(s => s.PlanId);
+
+        modelBuilder.Entity<Suscripcion>().ToTable("Suscripcion");
     }
 }
