@@ -166,6 +166,8 @@ namespace webapi.Controllers
             };
 
             await _usuarioService.Save(newUser);
+            await _emailService.SendRegistrationEmail(newUser.Email, $"{newUser.Nombre} {newUser.Apellido}");
+
 
             // Crear la suscripción en la base de datos
             var newSubscription = new Suscripcion

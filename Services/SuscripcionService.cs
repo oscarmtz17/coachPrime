@@ -89,6 +89,16 @@ namespace webapi.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Usuario> GetUsuarioById(int usuarioId)
+        {
+            return await _context.Usuarios.FindAsync(usuarioId);
+        }
+
+        public async Task<Plan> GetPlanById(int planId)
+        {
+            return await _context.Planes.FindAsync(planId);
+        }
+
     }
 
     public interface ISuscripcionService
@@ -100,5 +110,7 @@ namespace webapi.Services
         void Update(Suscripcion suscripcion);
         void Cancel(int suscripcionId);
         bool IsActive(int usuarioId);
+        Task<Usuario> GetUsuarioById(int usuarioId);
+        Task<Plan> GetPlanById(int planId);
     }
 }

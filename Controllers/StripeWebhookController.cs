@@ -14,11 +14,16 @@ namespace webapi.Controllers
     {
         private readonly ISuscripcionService _suscripcionService;
         private readonly IConfiguration _configuration;
+        private readonly EmailService _emailService;
 
-        public StripeWebhookController(ISuscripcionService suscripcionService, IConfiguration configuration)
+        private readonly CoachPrimeContext _context;
+
+        public StripeWebhookController(ISuscripcionService suscripcionService, IConfiguration configuration, EmailService emailService, CoachPrimeContext context)
         {
             _suscripcionService = suscripcionService;
             _configuration = configuration;
+            _emailService = emailService;
+            _context = context;
         }
 
         [HttpPost]
@@ -86,6 +91,41 @@ namespace webapi.Controllers
                     subscription.StripeSubscriptionId = session.Subscription?.Id;
 
                     _suscripcionService.Update(subscription);
+                    // Enviar correo de confirmación de pago
+                    var user = await _suscripcionService.GetUsuarioById(subscription.UsuarioId);
+                    if (user == null)
+                    {
+                        return BadRequest($"No se encontró un usuario con el ID {subscription.UsuarioId}.");
+                    }
+                    var userEmail = user.Email;
+                    var userName = $"{user.Nombre} {user.Apellido}";
+
+                    var plan = await _suscripcionService.GetPlanById(subscription.PlanId);
+                    if (plan == null)
+                    {
+                        return BadRequest($"No se encontró un plan con el ID {subscription.PlanId}.");
+                    }
+                    var planName = plan.Nombre;
+
+
+                    // Enviar correo de confirmación de pago
+                    if (subscription.FechaInicio != null && subscription.FechaFin.HasValue)
+                    {
+                        await _emailService.SendPaymentConfirmationEmail(
+                            userEmail,
+                            userName,
+                            planName,
+                            subscription.FechaInicio,
+                            subscription.FechaFin.Value
+                        );
+                    }
+                    else
+                    {
+                        // Manejar el caso en que las fechas sean null (opcional)
+                        Console.WriteLine("Las fechas de inicio o fin no están definidas.");
+                    }
+
+
 
                     return Ok("Subscription updated successfully.");
                 }
