@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using Stripe;
 using Stripe.BillingPortal;
 using webapi.Services;
+using Stripe.Checkout;
+
 
 namespace webapi.Controllers
 {
@@ -36,7 +38,22 @@ namespace webapi.Controllers
 
                 if (stripeEvent.Type == "checkout.session.completed")
                 {
-                    var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
+                    var sessionService = new Stripe.Checkout.SessionService();
+
+                    // Convertir el objeto stripeEvent.Data.Object a Stripe.Checkout.Session
+                    var sessionObject = stripeEvent.Data.Object as Stripe.Checkout.Session;
+
+                    if (sessionObject == null || string.IsNullOrEmpty(sessionObject.Id))
+                    {
+                        return BadRequest("Session object is null or does not contain a valid ID.");
+                    }
+
+                    var session = sessionService.Get(
+                        sessionObject.Id,
+                        new SessionGetOptions
+                        {
+                            Expand = new List<string> { "subscription" }
+                        });
 
                     if (session == null)
                     {
@@ -55,6 +72,7 @@ namespace webapi.Controllers
                     {
                         return BadRequest("UserId or SubscriptionId is null or empty.");
                     }
+
                     // Actualizar la suscripción en la base de datos
                     var subscription = await _suscripcionService.GetById(int.Parse(subscriptionId));
                     if (subscription == null)
@@ -70,8 +88,9 @@ namespace webapi.Controllers
                     _suscripcionService.Update(subscription);
 
                     return Ok("Subscription updated successfully.");
-
                 }
+
+
 
 
                 Console.WriteLine($"Evento no manejado: {stripeEvent.Type}");
