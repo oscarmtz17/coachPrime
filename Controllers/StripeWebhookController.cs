@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Stripe;
 using Stripe.BillingPortal;
 using webapi.Services;
@@ -25,49 +26,71 @@ namespace webapi.Controllers
 
             try
             {
-                var stripeEvent = EventUtility.ConstructEvent(
-                    json,
-                    Request.Headers["Stripe-Signature"],
-                    _configuration["Stripe:WebhookSecret"] // Configura este valor en appsettings.json
-                );
+                // var stripeEvent = EventUtility.ConstructEvent(
+                //     json,
+                //     Request.Headers["Stripe-Signature"],
+                //     _configuration["Stripe:WebhookSecret"]
+                // );
+                var stripeEvent = JsonConvert.DeserializeObject<Event>(json);
 
-                // Manejar diferentes tipos de eventos
+
                 if (stripeEvent.Type == "checkout.session.completed")
                 {
                     var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
 
-                    if (session != null && session.Metadata != null)
+                    if (session == null)
                     {
-                        var userId = session.Metadata["userId"];
-                        var subscriptionId = session.Metadata["subscriptionId"];
-
-                        // Actualizar la suscripción
-                        var subscription = await _suscripcionService.GetById(int.Parse(subscriptionId));
-                        if (subscription != null)
-                        {
-                            subscription.EstadoSuscripcionId = 2; // Activa
-                            subscription.FechaInicio = DateTime.Now;
-                            subscription.FechaFin = DateTime.Now.AddMonths(1); // Configura la duración real aquí
-                            await _suscripcionService.Save(subscription);
-                        }
+                        return BadRequest("Session data is null.");
                     }
 
-                    return Ok();
+                    if (session.Metadata == null || !session.Metadata.ContainsKey("userId") || !session.Metadata.ContainsKey("subscriptionId"))
+                    {
+                        return BadRequest("Metadata is missing or invalid.");
+                    }
+
+                    var userId = session.Metadata["userId"];
+                    var subscriptionId = session.Metadata["subscriptionId"];
+
+                    if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(subscriptionId))
+                    {
+                        return BadRequest("UserId or SubscriptionId is null or empty.");
+                    }
+                    // Actualizar la suscripción en la base de datos
+                    var subscription = await _suscripcionService.GetById(int.Parse(subscriptionId));
+                    if (subscription == null)
+                    {
+                        return BadRequest($"No se encontró la suscripción con ID {subscriptionId}.");
+                    }
+
+                    subscription.EstadoSuscripcionId = 2; // Activa
+                    subscription.FechaInicio = DateTime.Now;
+                    subscription.FechaFin = DateTime.Now.AddMonths(1);
+                    subscription.StripeSubscriptionId = session.Subscription?.Id;
+
+                    _suscripcionService.Update(subscription);
+
+                    return Ok("Subscription updated successfully.");
+
                 }
 
-                // Si el tipo de evento no es manejado
-                return BadRequest("Evento no manejado.");
+
+                Console.WriteLine($"Evento no manejado: {stripeEvent.Type}");
+                return Ok();
             }
             catch (StripeException e)
             {
-                return BadRequest($"Webhook Error: {e.Message}");
+                Console.WriteLine($"Stripe Webhook Error: {e.Message}");
+                return BadRequest($"Stripe Webhook Error: {e.Message}");
             }
             catch (Exception ex)
             {
-                // Captura de cualquier otro error no relacionado con Stripe
-                return BadRequest($"Error inesperado: {ex.Message}");
+                Console.WriteLine($"Unexpected Error: {ex.Message}");
+                return BadRequest($"Unexpected Error: {ex.Message}");
             }
         }
+
+
+
 
     }
 }
