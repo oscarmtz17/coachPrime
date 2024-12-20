@@ -1,5 +1,6 @@
 using System.Linq;
 using webapi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Services
 {
@@ -99,6 +100,11 @@ namespace webapi.Services
             return await _context.Planes.FindAsync(planId);
         }
 
+        public async Task<Suscripcion> GetByStripeId(string stripeSubscriptionId)
+        {
+            return await _context.Suscripcion.FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSubscriptionId);
+        }
+
     }
 
     public interface ISuscripcionService
@@ -112,5 +118,6 @@ namespace webapi.Services
         bool IsActive(int usuarioId);
         Task<Usuario> GetUsuarioById(int usuarioId);
         Task<Plan> GetPlanById(int planId);
+        Task<Suscripcion> GetByStripeId(string stripeSubscriptionId);
     }
 }
