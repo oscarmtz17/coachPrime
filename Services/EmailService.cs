@@ -118,6 +118,32 @@ public class EmailService
 
         await SendEmailAsync(recipientEmail, subject, htmlBody, textBody);
     }
+    public async Task SendSubscriptionReminder(string recipientEmail, string username, DateTime endDate, int daysLeft)
+    {
+        string subject = $"Tu suscripción expira en {daysLeft} días";
+        string htmlBody = $@"
+        <html>
+        <head></head>
+        <body>
+            <h1>Hola {username},</h1>
+            <p>Tu suscripción está por expirar el <strong>{endDate:dd/MM/yyyy}</strong>.</p>
+            <p>Te quedan <strong>{daysLeft}</strong> días para renovarla y continuar disfrutando de nuestros servicios.</p>
+            <br />
+            <p>Atentamente,</p>
+            <p>Equipo de CoachPrime</p>
+        </body>
+        </html>";
+
+        string textBody = $@"
+        Hola {username},
+        Tu suscripción está por expirar el {endDate:dd/MM/yyyy}.
+        Te quedan {daysLeft} días para renovarla y continuar disfrutando de nuestros servicios.
+        Atentamente,
+        Equipo de CoachPrime";
+
+        await SendEmailAsync(recipientEmail, subject, htmlBody, textBody);
+    }
+
 
     // Método genérico para enviar correos
     private async Task SendEmailAsync(string recipientEmail, string subject, string htmlBody, string textBody)

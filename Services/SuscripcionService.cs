@@ -105,6 +105,35 @@ namespace webapi.Services
             return await _context.Suscripcion.FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSubscriptionId);
         }
 
+        public List<Suscripcion> GetActiveSubscriptions()
+        {
+            return _context.Suscripcion
+                .Where(s => s.EstadoSuscripcionId == 2 && s.FechaFin > DateTime.Now) // 2 es "Activa"
+                .ToList();
+        }
+
+        public List<Suscripcion> GetExpiredSubscriptions()
+        {
+            return _context.Suscripcion
+                .Where(s => s.EstadoSuscripcionId == 2 && s.FechaFin <= DateTime.Now) // Activas pero vencidas
+                .ToList();
+        }
+
+        public void MarkSubscriptionsAsExpired()
+        {
+            var expiredSubscriptions = GetExpiredSubscriptions();
+
+            foreach (var suscripcion in expiredSubscriptions)
+            {
+                suscripcion.EstadoSuscripcionId = 3; // Expirada
+            }
+
+            _context.SaveChanges(); // Guardar cambios en la base de datos
+        }
+
+
+
+
     }
 
     public interface ISuscripcionService
@@ -119,5 +148,8 @@ namespace webapi.Services
         Task<Usuario> GetUsuarioById(int usuarioId);
         Task<Plan> GetPlanById(int planId);
         Task<Suscripcion> GetByStripeId(string stripeSubscriptionId);
+        List<Suscripcion> GetActiveSubscriptions();
+        List<Suscripcion> GetExpiredSubscriptions();
+        void MarkSubscriptionsAsExpired();
     }
 }

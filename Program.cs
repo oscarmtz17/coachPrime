@@ -8,6 +8,8 @@ using System.Text;
 using Microsoft.AspNetCore.Cors;
 using Amazon.Extensions.NETCore.Setup;
 using Stripe;
+using Hangfire;
+using Hangfire.SqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +65,12 @@ builder.Services.AddControllers()
         x.JsonSerializerOptions.WriteIndented = true; // Para formatear la salida de manera más legible
     });
 
+// Configurar Hangfire
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHangfireServer();
+
 // Configurar CORS
 builder.Services.AddCors(options =>
 {
@@ -78,6 +86,7 @@ builder.Services.AddCors(options =>
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
+
 // Configuración de Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe: SecretKey"];
 
@@ -89,6 +98,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+// Configurar el Dashboard de Hangfire
+app.UseHangfireDashboard();
+
+// Registrar tareas recurrentes
+RecurringJob.AddOrUpdate<RecurringJobs>(
+    "CheckAndNotifySubscriptions",
+    job => job.CheckAndNotifySubscriptions(),
+    Cron.Daily // Ejecutar diariamente
+);
+
+// Al final de tu configuración
+RecurringJob.AddOrUpdate<ISuscripcionService>(
+    "ActualizarSuscripcionesVencidas", // Nombre del job
+    service => service.MarkSubscriptionsAsExpired(), // Método a ejecutar
+    Cron.Daily // Ejecutar diariamente
+);
 
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
