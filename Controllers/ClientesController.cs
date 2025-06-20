@@ -11,10 +11,12 @@ namespace webapi.Controllers;
 public class ClienteController : ControllerBase
 {
     private readonly IClienteService clienteService;
+    private readonly ISuscripcionService suscripcionService;
 
-    public ClienteController(IClienteService service)
+    public ClienteController(IClienteService service, ISuscripcionService suscripcionSrv)
     {
         clienteService = service;
+        suscripcionService = suscripcionSrv;
     }
 
     // Obtener todos los clientes del usuario autenticado
@@ -62,21 +64,25 @@ public class ClienteController : ControllerBase
     public async Task<IActionResult> Post([FromBody] Cliente cliente)
     {
         var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (usuarioIdClaim == null)
+        if (usuarioIdClaim == null || !int.TryParse(usuarioIdClaim, out int usuarioId))
         {
-            return Unauthorized("Token inválido o falta el claim del UsuarioId.");
+            return Unauthorized("Token inválido o usuario no autorizado.");
         }
 
-        Console.WriteLine($"UsuarioIdClaim: {usuarioIdClaim}");
-
-        if (!int.TryParse(usuarioIdClaim, out int usuarioId))
+        // Lógica de validación del plan de suscripción
+        var suscripcion = suscripcionService.GetByUsuarioId(usuarioId);
+        if (suscripcion != null && suscripcion.PlanId == 1) // Plan Básico
         {
-            return Unauthorized("Usuario no autorizado");
+            var clientesActuales = clienteService.GetByUsuarioId(usuarioId).Count();
+            if (clientesActuales >= 3)
+            {
+                return BadRequest("Has alcanzado el límite de 3 clientes para el plan Básico.");
+            }
         }
 
         if (ModelState.IsValid)
         {
-            cliente.UsuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);  // Asigna el UsuarioId desde el token
+            cliente.UsuarioId = usuarioId;
             await clienteService.Save(cliente);
             return Ok("Cliente creado exitosamente");
         }
