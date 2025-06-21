@@ -1,9 +1,28 @@
+using System.Collections.Generic;
 using System.Linq;
-using webapi.Models;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using webapi.Models;
 
 namespace webapi.Services
 {
+    public interface ISuscripcionService
+    {
+        Task<IEnumerable<Suscripcion>> GetAll();
+        Task<Suscripcion> GetById(int id);
+        Task<Suscripcion> GetByUserId(int userId);
+        Task<Suscripcion> GetByStripeId(string stripeSubscriptionId);
+        Task Save(Suscripcion suscripcion);
+        Task Update(Suscripcion suscripcion);
+        Task Cancel(int suscripcionId);
+        Task<bool> IsActive(int usuarioId);
+        Task<Usuario> GetUsuarioById(int usuarioId);
+        Task<Plan> GetPlanById(int planId);
+        Task<List<Suscripcion>> GetActiveSubscriptions();
+        Task<List<Suscripcion>> GetExpiredSubscriptions();
+        Task MarkSubscriptionsAsExpired();
+    }
+
     public class SuscripcionService : ISuscripcionService
     {
         private readonly CoachPrimeContext _context;
@@ -13,23 +32,38 @@ namespace webapi.Services
             _context = context;
         }
 
-        // Guardar una nueva suscripción
+        public async Task<IEnumerable<Suscripcion>> GetAll()
+        {
+            return await _context.Suscripcion.ToListAsync();
+        }
+
+        public async Task<Suscripcion> GetById(int id)
+        {
+            return await _context.Suscripcion.FindAsync(id);
+        }
+
+        public async Task<Suscripcion> GetByUserId(int userId)
+        {
+            return await _context.Suscripcion
+                .Include(s => s.Plan)
+                .FirstOrDefaultAsync(s => s.UsuarioId == userId);
+        }
+
+        public async Task<Suscripcion> GetByStripeId(string stripeSubscriptionId)
+        {
+            return await _context.Suscripcion.FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSubscriptionId);
+        }
+
         public async Task Save(Suscripcion suscripcion)
         {
-            await _context.Suscripcion.AddAsync(suscripcion);
+            _context.Suscripcion.Add(suscripcion);
             await _context.SaveChangesAsync();
         }
 
-        // Obtener una suscripción por el ID del usuario
-        public Suscripcion GetByUsuarioId(int usuarioId)
+        public async Task Update(Suscripcion suscripcion)
         {
-            return _context.Suscripcion.FirstOrDefault(s => s.UsuarioId == usuarioId);
-        }
+            var existingSuscripcion = await _context.Suscripcion.FindAsync(suscripcion.SuscripcionId);
 
-        // Actualizar una suscripción existente
-        public void Update(Suscripcion suscripcion)
-        {
-            var existingSuscripcion = _context.Suscripcion.Find(suscripcion.SuscripcionId);
             if (existingSuscripcion != null)
             {
                 existingSuscripcion.PlanId = suscripcion.PlanId;
@@ -38,56 +72,32 @@ namespace webapi.Services
                 existingSuscripcion.EstadoSuscripcionId = suscripcion.EstadoSuscripcionId;
                 existingSuscripcion.StripeSubscriptionId = suscripcion.StripeSubscriptionId;
                 existingSuscripcion.FechaCancelacion = suscripcion.FechaCancelacion;
-
-                _context.SaveChanges();
             }
+            else
+            {
+                _context.Suscripcion.Add(suscripcion);
+            }
+
+            await _context.SaveChangesAsync();
         }
 
-        // Cancelar una suscripción por ID
-        public void Cancel(int suscripcionId)
+        public async Task Cancel(int suscripcionId)
         {
-            var suscripcion = _context.Suscripcion.Find(suscripcionId);
+            var suscripcion = await _context.Suscripcion.FindAsync(suscripcionId);
             if (suscripcion != null)
             {
                 suscripcion.EstadoSuscripcionId = 3; // Suponiendo que 3 es 'Cancelada'
                 suscripcion.FechaCancelacion = DateTime.Now;
-
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
 
-        // Verificar si un usuario tiene una suscripción activa
-        public bool IsActive(int usuarioId)
+        public async Task<bool> IsActive(int usuarioId)
         {
-            return _context.Suscripcion.Any(s =>
+            return await _context.Suscripcion.AnyAsync(s =>
                 s.UsuarioId == usuarioId &&
-                s.EstadoSuscripcionId == 1 && // Suponiendo que 1 es 'Activa'
-                s.FechaFin > DateTime.Now);
-        }
-
-        public async Task<Suscripcion> GetById(int id)
-        {
-            return await _context.Suscripcion.FindAsync(id);
-        }
-
-
-        public async Task ActivarSuscripcion(int suscripcionId)
-        {
-            // Buscar la suscripción por ID
-            var suscripcion = await _context.Suscripcion.FindAsync(suscripcionId);
-
-            if (suscripcion == null)
-            {
-                throw new KeyNotFoundException($"No se encontró una suscripción con el ID {suscripcionId}");
-            }
-
-            // Cambiar el estado a "Activa"
-            suscripcion.EstadoSuscripcionId = 2; // 2 corresponde a "Activa"
-            suscripcion.FechaInicio = DateTime.Now; // Registrar la fecha de activación
-
-            // Guardar cambios en la base de datos
-            _context.Suscripcion.Update(suscripcion);
-            await _context.SaveChangesAsync();
+                s.EstadoSuscripcionId == 2 && // 2 es 'Activa'
+                (s.FechaFin == null || s.FechaFin > DateTime.Now));
         }
 
         public async Task<Usuario> GetUsuarioById(int usuarioId)
@@ -100,56 +110,28 @@ namespace webapi.Services
             return await _context.Planes.FindAsync(planId);
         }
 
-        public async Task<Suscripcion> GetByStripeId(string stripeSubscriptionId)
+        public async Task<List<Suscripcion>> GetActiveSubscriptions()
         {
-            return await _context.Suscripcion.FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSubscriptionId);
+            return await _context.Suscripcion
+                .Where(s => s.EstadoSuscripcionId == 2 && s.FechaFin > DateTime.Now)
+                .ToListAsync();
         }
 
-        public List<Suscripcion> GetActiveSubscriptions()
+        public async Task<List<Suscripcion>> GetExpiredSubscriptions()
         {
-            return _context.Suscripcion
-                .Where(s => s.EstadoSuscripcionId == 2 && s.FechaFin > DateTime.Now) // 2 es "Activa"
-                .ToList();
+            return await _context.Suscripcion
+                .Where(s => s.EstadoSuscripcionId == 2 && s.FechaFin <= DateTime.Now)
+                .ToListAsync();
         }
 
-        public List<Suscripcion> GetExpiredSubscriptions()
+        public async Task MarkSubscriptionsAsExpired()
         {
-            return _context.Suscripcion
-                .Where(s => s.EstadoSuscripcionId == 2 && s.FechaFin <= DateTime.Now) // Activas pero vencidas
-                .ToList();
-        }
-
-        public void MarkSubscriptionsAsExpired()
-        {
-            var expiredSubscriptions = GetExpiredSubscriptions();
-
+            var expiredSubscriptions = await GetExpiredSubscriptions();
             foreach (var suscripcion in expiredSubscriptions)
             {
                 suscripcion.EstadoSuscripcionId = 3; // Expirada
             }
-
-            _context.SaveChanges(); // Guardar cambios en la base de datos
+            await _context.SaveChangesAsync();
         }
-
-
-
-
-    }
-
-    public interface ISuscripcionService
-    {
-        Task<Suscripcion> GetById(int id);
-        Task Save(Suscripcion suscripcion);
-        Task ActivarSuscripcion(int suscripcionId);
-        Suscripcion GetByUsuarioId(int usuarioId);
-        void Update(Suscripcion suscripcion);
-        void Cancel(int suscripcionId);
-        bool IsActive(int usuarioId);
-        Task<Usuario> GetUsuarioById(int usuarioId);
-        Task<Plan> GetPlanById(int planId);
-        Task<Suscripcion> GetByStripeId(string stripeSubscriptionId);
-        List<Suscripcion> GetActiveSubscriptions();
-        List<Suscripcion> GetExpiredSubscriptions();
-        void MarkSubscriptionsAsExpired();
     }
 }

@@ -210,7 +210,8 @@ namespace webapi.Controllers
                 Metadata = new Dictionary<string, string>
         {
             { "userId", newUser.UsuarioId.ToString() },
-            { "subscriptionId", newSubscription.SuscripcionId.ToString() }
+            { "subscriptionId", newSubscription.SuscripcionId.ToString() },
+            { "planId", request.PlanId.ToString() }
         }
             };
 

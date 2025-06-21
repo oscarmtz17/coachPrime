@@ -42,7 +42,7 @@ namespace webapi.Services
             }
 
             // Encripta la contraseña antes de guardarla
-            usuario.Apellido=usuario.Apellido;
+            usuario.Apellido = usuario.Apellido;
             usuario.Password = HashPassword(usuario.Password);
             usuario.Phone = usuario.Phone;
             usuario.FechaRegistro = DateTime.Now;
@@ -229,20 +229,21 @@ namespace webapi.Services
         }
 
         public bool ValidateUserPassword(int usuarioId, string currentPassword)
-{
-    var user = context.Usuarios.Find(usuarioId);
-    if (user == null)
-    {
-        return false; // Usuario no encontrado
-    }
+        {
+            var user = context.Usuarios.Find(usuarioId);
+            if (user == null)
+            {
+                return false; // Usuario no encontrado
+            }
 
-    // Verificar que la contraseña ingresada coincida con la almacenada
-    return BCrypt.Net.BCrypt.Verify(currentPassword, user.Password);
-}
+            // Verificar que la contraseña ingresada coincida con la almacenada
+            return BCrypt.Net.BCrypt.Verify(currentPassword, user.Password);
+        }
 
-
-
-
+        public async Task<Usuario> GetByIdAsync(int id)
+        {
+            return await context.Usuarios.FindAsync(id);
+        }
     }
 
     public interface IUsuarioService
@@ -275,5 +276,6 @@ namespace webapi.Services
 
         bool ValidateUserPassword(int usuarioId, string currentPassword);
 
+        Task<Usuario> GetByIdAsync(int id);
     }
 }

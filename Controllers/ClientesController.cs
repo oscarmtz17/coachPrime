@@ -70,7 +70,7 @@ public class ClienteController : ControllerBase
         }
 
         // Lógica de validación del plan de suscripción
-        var suscripcion = suscripcionService.GetByUsuarioId(usuarioId);
+        var suscripcion = await suscripcionService.GetByUserId(usuarioId);
         if (suscripcion != null && suscripcion.PlanId == 1) // Plan Básico
         {
             var clientesActuales = clienteService.GetByUsuarioId(usuarioId).Count();

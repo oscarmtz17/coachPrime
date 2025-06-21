@@ -12,9 +12,9 @@ public class RecurringJobs
         _emailService = emailService;
     }
 
-    public void CheckAndNotifySubscriptions()
+    public async Task CheckAndNotifySubscriptions()
     {
-        var suscripciones = _suscripcionService.GetActiveSubscriptions();
+        var suscripciones = await _suscripcionService.GetActiveSubscriptions();
 
         foreach (var suscripcion in suscripciones)
         {
@@ -25,26 +25,24 @@ public class RecurringJobs
                 if (diasRestantes <= 7 && diasRestantes > 0)
                 {
                     // Enviar recordatorio por correo
-                    var usuario = _suscripcionService.GetUsuarioById(suscripcion.UsuarioId).Result;
+                    var usuario = await _suscripcionService.GetUsuarioById(suscripcion.UsuarioId);
                     if (usuario != null)
                     {
-                        _emailService.SendSubscriptionReminder(
+                        await _emailService.SendSubscriptionReminder(
                             usuario.Email,
                             usuario.Nombre,
                             suscripcion.FechaFin.Value,
                             diasRestantes
-                        ).Wait();
+                        );
                     }
                 }
                 else if (diasRestantes <= 0)
                 {
                     // Actualizar estado de la suscripción como "Expirada"
                     suscripcion.EstadoSuscripcionId = 3; // 3 es Expirada
-                    _suscripcionService.Update(suscripcion);
+                    await _suscripcionService.Update(suscripcion);
                 }
             }
         }
     }
-
-
 }

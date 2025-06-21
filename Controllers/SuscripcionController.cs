@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using webapi.Services;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace webapi.Controllers
 {
@@ -18,7 +19,7 @@ namespace webapi.Controllers
         }
 
         [HttpGet("actual")]
-        public IActionResult GetSuscripcionActual()
+        public async Task<IActionResult> GetSuscripcionActual()
         {
             var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (usuarioIdClaim == null || !int.TryParse(usuarioIdClaim, out int usuarioId))
@@ -26,7 +27,7 @@ namespace webapi.Controllers
                 return Unauthorized("Token inválido o usuario no autorizado.");
             }
 
-            var suscripcion = _suscripcionService.GetByUsuarioId(usuarioId);
+            var suscripcion = await _suscripcionService.GetByUserId(usuarioId);
             if (suscripcion == null)
             {
                 return NotFound("No se encontró una suscripción para este usuario.");

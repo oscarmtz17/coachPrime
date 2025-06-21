@@ -10,6 +10,7 @@ using Amazon.Extensions.NETCore.Setup;
 using Stripe;
 using Hangfire;
 using Hangfire.SqlServer;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,7 @@ builder.Services.AddScoped<IDietaService, DietaService>();
 builder.Services.AddScoped<ISuscripcionService, SuscripcionService>(); // Registro del servicio de suscripciones
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<S3Service>();
+builder.Services.AddScoped<IStripeService, StripeService>(); // Register StripeService
 builder.Services.AddTransient<EmailService>();
 
 // Añadir autenticación JWT
