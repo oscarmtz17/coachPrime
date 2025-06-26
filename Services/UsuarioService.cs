@@ -79,9 +79,14 @@ namespace webapi.Services
         // Implementación de manejo de Refresh Tokens
         public void SaveRefreshToken(int usuarioId, string refreshToken)
         {
+            Console.WriteLine($"Saving refresh token for user {usuarioId}");
             var usuario = context.Usuarios.Find(usuarioId);
             if (usuario != null)
             {
+                // Revocar tokens existentes antes de guardar el nuevo
+                var existingTokens = context.RefreshTokens.Where(rt => rt.UsuarioId == usuarioId);
+                context.RefreshTokens.RemoveRange(existingTokens);
+
                 var newRefreshToken = new RefreshToken
                 {
                     Token = refreshToken,
@@ -90,16 +95,25 @@ namespace webapi.Services
                 };
                 context.RefreshTokens.Add(newRefreshToken);
                 context.SaveChanges();
+                Console.WriteLine($"Refresh token saved successfully for user {usuarioId}");
+            }
+            else
+            {
+                Console.WriteLine($"User {usuarioId} not found when trying to save refresh token");
             }
         }
 
         public string GetRefreshToken(int usuarioId)
         {
-            return context.RefreshTokens
+            Console.WriteLine($"Getting refresh token for user {usuarioId}");
+            var token = context.RefreshTokens
                 .Where(rt => rt.UsuarioId == usuarioId && rt.ExpirationDate > DateTime.Now)
                 .OrderByDescending(rt => rt.ExpirationDate)
                 .Select(rt => rt.Token)
                 .FirstOrDefault();
+
+            Console.WriteLine($"Retrieved token for user {usuarioId}: {!string.IsNullOrEmpty(token)}");
+            return token;
         }
 
         public void RevokeRefreshToken(int usuarioId)

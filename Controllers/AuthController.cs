@@ -32,48 +32,106 @@ namespace webapi.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest loginRequest)
         {
-            var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
-            if (user == null)
+            try
             {
-                return Unauthorized("Credenciales incorrectas");
+                Console.WriteLine($"Login attempt for email: {loginRequest.Email}");
+
+                var user = _usuarioService.ValidateUser(loginRequest.Email, loginRequest.Password);
+                if (user == null)
+                {
+                    Console.WriteLine("Invalid credentials");
+                    return Unauthorized("Credenciales incorrectas");
+                }
+
+                Console.WriteLine($"User validated: {user.UsuarioId}");
+
+                // if (!user.EmailVerificado)
+                // {
+                //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+                // }
+
+                var token = GenerateJwtToken(user);
+                var refreshToken = GenerateRefreshToken();
+
+                Console.WriteLine($"Generated tokens - JWT: {!string.IsNullOrEmpty(token)}, Refresh: {!string.IsNullOrEmpty(refreshToken)}");
+
+                _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
+                Console.WriteLine($"Refresh token saved for user {user.UsuarioId}");
+
+                // Incluye el `userId` en la respuesta
+                return Ok(new { userId = user.UsuarioId, token, refreshToken });
             }
-
-            // if (!user.EmailVerificado)
-            // {
-            //     return BadRequest("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
-            // }
-
-            var token = GenerateJwtToken(user);
-            var refreshToken = GenerateRefreshToken();
-
-            _usuarioService.SaveRefreshToken(user.UsuarioId, refreshToken);
-
-            // Incluye el `userId` en la respuesta
-            return Ok(new { userId = user.UsuarioId, token, refreshToken });
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in login endpoint: {ex.Message}");
+                return StatusCode(500, "Error interno del servidor");
+            }
         }
 
 
         [HttpPost("refresh")]
         public IActionResult Refresh([FromBody] TokenRequest tokenRequest)
         {
-            var principal = GetPrincipalFromExpiredToken(tokenRequest.AccessToken);
-            if (principal == null) return BadRequest("Token inválido.");
-
-            var usuarioId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
-            var savedRefreshToken = _usuarioService.GetRefreshToken(usuarioId);
-
-            if (savedRefreshToken != tokenRequest.RefreshToken || savedRefreshToken == null || _usuarioService.IsRefreshTokenRevoked(usuarioId))
+            try
             {
-                return Unauthorized("Refresh token inválido.");
+                Console.WriteLine($"Refresh request received. AccessToken: {!string.IsNullOrEmpty(tokenRequest.AccessToken)}, RefreshToken: {!string.IsNullOrEmpty(tokenRequest.RefreshToken)}");
+
+                var principal = GetPrincipalFromExpiredToken(tokenRequest.AccessToken);
+                if (principal == null)
+                {
+                    Console.WriteLine("Invalid access token");
+                    return BadRequest("Token inválido.");
+                }
+
+                var usuarioId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
+                Console.WriteLine($"User ID from token: {usuarioId}");
+
+                var savedRefreshToken = _usuarioService.GetRefreshToken(usuarioId);
+                Console.WriteLine($"Saved refresh token: {!string.IsNullOrEmpty(savedRefreshToken)}");
+                Console.WriteLine($"Token match: {savedRefreshToken == tokenRequest.RefreshToken}");
+                Console.WriteLine($"Is revoked: {_usuarioService.IsRefreshTokenRevoked(usuarioId)}");
+
+                if (savedRefreshToken != tokenRequest.RefreshToken || savedRefreshToken == null || _usuarioService.IsRefreshTokenRevoked(usuarioId))
+                {
+                    Console.WriteLine("Refresh token validation failed");
+                    return Unauthorized("Refresh token inválido.");
+                }
+
+                var user = _usuarioService.GetUserById(usuarioId);
+                if (user == null)
+                {
+                    Console.WriteLine("User not found");
+                    return NotFound("Usuario no encontrado.");
+                }
+
+                var newJwtToken = GenerateJwtToken(user);
+                var newRefreshToken = GenerateRefreshToken();
+
+                _usuarioService.RevokeRefreshToken(usuarioId);
+                _usuarioService.SaveRefreshToken(usuarioId, newRefreshToken);
+
+                Console.WriteLine("Token refresh successful");
+                return Ok(new { token = newJwtToken, refreshToken = newRefreshToken });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in refresh endpoint: {ex.Message}");
+                return StatusCode(500, "Error interno del servidor");
+            }
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                int userId = int.Parse(userIdClaim.Value);
+                _usuarioService.RevokeRefreshToken(userId);
             }
 
-            var newJwtToken = GenerateJwtToken(_usuarioService.GetUserById(usuarioId));
-            var newRefreshToken = GenerateRefreshToken();
-
-            _usuarioService.RevokeRefreshToken(usuarioId);
-            _usuarioService.SaveRefreshToken(usuarioId, newRefreshToken);
-
-            return Ok(new { token = newJwtToken, refreshToken = newRefreshToken });
+            return Ok(new { message = "Sesión cerrada exitosamente" });
         }
 
         [HttpPost("forgot-password")]
