@@ -73,12 +73,16 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
-// Configurar CORS
+// Configurar CORS por entorno
+string[] allowedOrigins = builder.Environment.IsDevelopment()
+    ? new[] { "http://localhost:3000" }
+    : new[] { "https://qa.mytracksnote.com", "https://mytracksnote.com" };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        builder => builder
-            .WithOrigins("http://localhost:3000") // Reemplaza esto por la URL de tu frontend
+    options.AddPolicy("AllowFrontend",
+        policy => policy
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
@@ -117,7 +121,7 @@ RecurringJob.AddOrUpdate<ISuscripcionService>(
     Cron.Daily // Ejecutar diariamente
 );
 
-app.UseCors("AllowReactApp");
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
 // Habilitar autenticación
