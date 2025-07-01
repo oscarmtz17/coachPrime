@@ -98,10 +98,18 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe: SecretKey"];
 
 var app = builder.Build();
 
-// Middleware global de manejo de errores
+// Seguridad: HSTS y cabeceras solo en QA/PROD
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/error");
+    app.UseHsts(); // HTTP Strict Transport Security
+    app.UseHttpsRedirection();
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Add("X-Frame-Options", "DENY");
+        context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
+        await next();
+    });
 }
 else
 {
@@ -132,7 +140,6 @@ RecurringJob.AddOrUpdate<ISuscripcionService>(
 );
 
 app.UseCors("AllowFrontend");
-app.UseHttpsRedirection();
 
 // Habilitar autenticación
 app.UseAuthentication();
