@@ -117,7 +117,7 @@ else
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "QA")
 {
     app.UseSwagger();
     app.UseSwaggerUI();
