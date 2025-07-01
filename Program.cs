@@ -98,6 +98,16 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe: SecretKey"];
 
 var app = builder.Build();
 
+// Middleware global de manejo de errores
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/error");
+}
+else
+{
+    app.UseDeveloperExceptionPage();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
