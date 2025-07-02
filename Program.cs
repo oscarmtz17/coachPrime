@@ -44,6 +44,10 @@ builder.Services.AddScoped<S3Service>();
 builder.Services.AddScoped<IStripeService, StripeService>(); // Register StripeService
 builder.Services.AddTransient<EmailService>();
 
+// Servicios de IA
+builder.Services.AddHttpClient<IAIService, AIService>();
+builder.Services.AddScoped<IAIDataService, AIDataService>();
+
 // Añadir autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
