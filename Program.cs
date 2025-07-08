@@ -30,7 +30,9 @@ builder.Services.AddSingleton<IAmazonS3>(s3Client);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSqlServer<CoachPrimeContext>("Data Source=LAPTOP-NTB0BH1O\\MSSQLSERVERAPP; Initial Catalog=CoachPrimeDB; user id=sa; password=P@ssw0rd; TrustServerCertificate=True");
+builder.Services.AddSqlServer<CoachPrimeContext>(
+    builder.Configuration.GetConnectionString("DefaultConnection")
+);
 
 // Registro de servicios
 builder.Services.AddScoped<IClienteService, ClienteService>();

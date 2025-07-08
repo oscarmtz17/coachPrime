@@ -7,5 +7,6 @@ public class Plan
     public int? MaxClientes { get; set; } // Máximo de clientes permitidos (nullable)
     public string? Beneficios { get; set; } // Lista de beneficios del plan
     public string Estado { get; set; } = "Activo"; // Activo/Inactivo
+    public string? StripePriceId { get; set; } // ID de precio de Stripe (opcional)
 }
 

@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi;
 
@@ -12,11 +11,9 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(CoachPrimeContext))]
-    [Migration("20241102044803_rutinadescripcionnull")]
-    partial class rutinadescripcionnull
+    partial class CoachPrimeContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -204,10 +201,9 @@ namespace webapi.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EjercicioId"));
 
                     b.Property<string>("Descripcion")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImagenUrl")
+                    b.Property<string>("ImagenKey")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
@@ -246,6 +242,149 @@ namespace webapi.Migrations
                     b.HasIndex("EjercicioId");
 
                     b.ToTable("EjercicioAgrupado");
+                });
+
+            modelBuilder.Entity("EstadoSuscripcion", b =>
+                {
+                    b.Property<int>("EstadoSuscripcionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EstadoSuscripcionId"));
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EsFinal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NombreEstado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EstadoSuscripcionId");
+
+                    b.ToTable("EstadoSuscripcion");
+
+                    b.HasData(
+                        new
+                        {
+                            EstadoSuscripcionId = 1,
+                            Descripcion = "Pago iniciado pero no completado.",
+                            EsFinal = false,
+                            NombreEstado = "Pendiente"
+                        },
+                        new
+                        {
+                            EstadoSuscripcionId = 2,
+                            Descripcion = "Suscripción activa y en buen estado.",
+                            EsFinal = false,
+                            NombreEstado = "Activa"
+                        },
+                        new
+                        {
+                            EstadoSuscripcionId = 3,
+                            Descripcion = "Periodo de suscripción finalizado.",
+                            EsFinal = true,
+                            NombreEstado = "Expirada"
+                        },
+                        new
+                        {
+                            EstadoSuscripcionId = 4,
+                            Descripcion = "Usuario canceló la suscripción.",
+                            EsFinal = true,
+                            NombreEstado = "Cancelada"
+                        },
+                        new
+                        {
+                            EstadoSuscripcionId = 5,
+                            Descripcion = "Periodo de suspensión/cancelación.",
+                            EsFinal = false,
+                            NombreEstado = "Suspendida"
+                        },
+                        new
+                        {
+                            EstadoSuscripcionId = 6,
+                            Descripcion = "Reactivada después de suspensión/cancelación.",
+                            EsFinal = false,
+                            NombreEstado = "Reactivada"
+                        },
+                        new
+                        {
+                            EstadoSuscripcionId = 7,
+                            Descripcion = "Periodo de prueba gratuita.",
+                            EsFinal = false,
+                            NombreEstado = "Prueba"
+                        });
+                });
+
+            modelBuilder.Entity("Plan", b =>
+                {
+                    b.Property<int>("PlanId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PlanId"));
+
+                    b.Property<string>("Beneficios")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Frecuencia")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("MaxClientes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("StripePriceId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("PlanId");
+
+                    b.ToTable("Plan", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            PlanId = 1,
+                            Beneficios = "Acceso básico a la app: Sin reportes avanzados.",
+                            Estado = "Activo",
+                            Frecuencia = "Mensual",
+                            MaxClientes = 5,
+                            Nombre = "Básico",
+                            Precio = 0.00m
+                        },
+                        new
+                        {
+                            PlanId = 3,
+                            Beneficios = "Reportes avanzados: Soporte dedicado; Integración avanzada.",
+                            Estado = "Activo",
+                            Frecuencia = "Mensual",
+                            Nombre = "Premium",
+                            Precio = 499.00m,
+                            StripePriceId = "price_1Q8KUQBZAdKpouIVDKjLz25"
+                        },
+                        new
+                        {
+                            PlanId = 4,
+                            Beneficios = "Igual que Premium; Descuento anual.",
+                            Estado = "Activo",
+                            Frecuencia = "Anual",
+                            Nombre = "Anual Premium",
+                            Precio = 4999.00m,
+                            StripePriceId = "price_1Q9r7hBZAdKpouIVK5WRxMl"
+                        });
                 });
 
             modelBuilder.Entity("Progreso", b =>
@@ -369,6 +508,46 @@ namespace webapi.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Rutinas");
+                });
+
+            modelBuilder.Entity("Suscripcion", b =>
+                {
+                    b.Property<int>("SuscripcionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SuscripcionId"));
+
+                    b.Property<int>("EstadoSuscripcionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaCancelacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StripeSubscriptionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SuscripcionId");
+
+                    b.HasIndex("EstadoSuscripcionId");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Suscripcion", (string)null);
                 });
 
             modelBuilder.Entity("Usuario", b =>
@@ -547,6 +726,33 @@ namespace webapi.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Suscripcion", b =>
+                {
+                    b.HasOne("EstadoSuscripcion", "EstadoSuscripcion")
+                        .WithMany()
+                        .HasForeignKey("EstadoSuscripcionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Plan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Usuario", "Usuario")
+                        .WithMany("Suscripciones")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EstadoSuscripcion");
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Agrupacion", b =>
                 {
                     b.Navigation("EjerciciosAgrupados");
@@ -586,6 +792,8 @@ namespace webapi.Migrations
                     b.Navigation("Clientes");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("Suscripciones");
                 });
 #pragma warning restore 612, 618
         }

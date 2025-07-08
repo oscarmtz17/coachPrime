@@ -285,9 +285,10 @@ namespace webapi.Controllers
         {
             return planId switch
             {
-                2 => "price_1QR94gBZAdKqouiVj2rqIAq1",
-                3 => "price_1QQKUQBZAdKqouiVDK0jLr25",
+                2 => throw new ArgumentException("Plan no válido."), // Ya no existe
+                3 => "price_1QQKUQBZAdKqouiVDK0jLr25", // Premium mensual
                 4 => "price_1QR97hBZAdKqouiVKf5WRxMl",
+                1 => throw new ArgumentException("El plan básico no requiere Stripe."),
                 _ => throw new ArgumentException("Plan no válido."),
             };
         }

@@ -75,5 +75,50 @@ public class CoachPrimeContext : DbContext
 
         modelBuilder.Entity<Suscripcion>().ToTable("Suscripcion");
         modelBuilder.Entity<Plan>().ToTable("Plan");
+
+        // Seed para Plan
+        modelBuilder.Entity<Plan>().HasData(
+            new Plan
+            {
+                PlanId = 1,
+                Nombre = "Básico",
+                Precio = 0.00m,
+                Frecuencia = "Mensual",
+                Beneficios = "Acceso básico a la app: Sin reportes avanzados.",
+                Estado = "Activo",
+                MaxClientes = 5
+            },
+            new Plan
+            {
+                PlanId = 3,
+                Nombre = "Premium",
+                Precio = 499.00m,
+                Frecuencia = "Mensual",
+                Beneficios = "Reportes avanzados: Soporte dedicado; Integración avanzada.",
+                Estado = "Activo",
+                StripePriceId = "price_1Q8KUQBZAdKpouIVDKjLz25"
+            },
+            new Plan
+            {
+                PlanId = 4,
+                Nombre = "Anual Premium",
+                Precio = 4999.00m,
+                Frecuencia = "Anual",
+                Beneficios = "Igual que Premium; Descuento anual.",
+                Estado = "Activo",
+                StripePriceId = "price_1Q9r7hBZAdKpouIVK5WRxMl"
+            }
+        );
+
+        // Seed para EstadoSuscripcion
+        modelBuilder.Entity<EstadoSuscripcion>().HasData(
+            new EstadoSuscripcion { EstadoSuscripcionId = 1, NombreEstado = "Pendiente", Descripcion = "Pago iniciado pero no completado.", EsFinal = false },
+            new EstadoSuscripcion { EstadoSuscripcionId = 2, NombreEstado = "Activa", Descripcion = "Suscripción activa y en buen estado.", EsFinal = false },
+            new EstadoSuscripcion { EstadoSuscripcionId = 3, NombreEstado = "Expirada", Descripcion = "Periodo de suscripción finalizado.", EsFinal = true },
+            new EstadoSuscripcion { EstadoSuscripcionId = 4, NombreEstado = "Cancelada", Descripcion = "Usuario canceló la suscripción.", EsFinal = true },
+            new EstadoSuscripcion { EstadoSuscripcionId = 5, NombreEstado = "Suspendida", Descripcion = "Periodo de suspensión/cancelación.", EsFinal = false },
+            new EstadoSuscripcion { EstadoSuscripcionId = 6, NombreEstado = "Reactivada", Descripcion = "Reactivada después de suspensión/cancelación.", EsFinal = false },
+            new EstadoSuscripcion { EstadoSuscripcionId = 7, NombreEstado = "Prueba", Descripcion = "Periodo de prueba gratuita.", EsFinal = false }
+        );
     }
 }

@@ -12,8 +12,8 @@ using webapi;
 namespace webapi.Migrations
 {
     [DbContext(typeof(CoachPrimeContext))]
-    [Migration("20241019214333_DietasModel")]
-    partial class DietasModel
+    [Migration("20250708092155_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,6 +47,35 @@ namespace webapi.Migrations
                     b.ToTable("Agrupaciones");
                 });
 
+            modelBuilder.Entity("Alimento", b =>
+                {
+                    b.Property<int>("AlimentoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlimentoId"));
+
+                    b.Property<double>("Cantidad")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ComidaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Unidad")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AlimentoId");
+
+                    b.HasIndex("ComidaId");
+
+                    b.ToTable("Alimentos");
+                });
+
             modelBuilder.Entity("Cliente", b =>
                 {
                     b.Property<int>("ClienteId")
@@ -74,7 +103,6 @@ namespace webapi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Sexo")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Telefono")
@@ -88,6 +116,32 @@ namespace webapi.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Clientes");
+                });
+
+            modelBuilder.Entity("Comida", b =>
+                {
+                    b.Property<int>("ComidaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ComidaId"));
+
+                    b.Property<int>("DietaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hora")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ComidaId");
+
+                    b.HasIndex("DietaId");
+
+                    b.ToTable("Comidas");
                 });
 
             modelBuilder.Entity("DiaEntrenamiento", b =>
@@ -112,6 +166,35 @@ namespace webapi.Migrations
                     b.ToTable("DiasEntrenamiento");
                 });
 
+            modelBuilder.Entity("Dieta", b =>
+                {
+                    b.Property<int>("DietaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DietaId"));
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaAsignacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notas")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("DietaId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.ToTable("Dietas");
+                });
+
             modelBuilder.Entity("Ejercicio", b =>
                 {
                     b.Property<int>("EjercicioId")
@@ -121,11 +204,9 @@ namespace webapi.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EjercicioId"));
 
                     b.Property<string>("Descripcion")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImagenUrl")
-                        .IsRequired()
+                    b.Property<string>("ImagenKey")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
@@ -164,6 +245,63 @@ namespace webapi.Migrations
                     b.HasIndex("EjercicioId");
 
                     b.ToTable("EjercicioAgrupado");
+                });
+
+            modelBuilder.Entity("EstadoSuscripcion", b =>
+                {
+                    b.Property<int>("EstadoSuscripcionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EstadoSuscripcionId"));
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EsFinal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NombreEstado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EstadoSuscripcionId");
+
+                    b.ToTable("EstadoSuscripcion");
+                });
+
+            modelBuilder.Entity("Plan", b =>
+                {
+                    b.Property<int>("PlanId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PlanId"));
+
+                    b.Property<string>("Beneficios")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Frecuencia")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("MaxClientes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("PlanId");
+
+                    b.ToTable("Plan", (string)null);
                 });
 
             modelBuilder.Entity("Progreso", b =>
@@ -228,6 +366,31 @@ namespace webapi.Migrations
                     b.ToTable("Progresos");
                 });
 
+            modelBuilder.Entity("RefreshToken", b =>
+                {
+                    b.Property<int>("RefreshTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RefreshTokenId"));
+
+                    b.Property<DateTime>("ExpirationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RefreshTokenId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("Rutina", b =>
                 {
                     b.Property<int>("RutinaId")
@@ -240,7 +403,6 @@ namespace webapi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Descripcion")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("FechaFin")
@@ -265,6 +427,46 @@ namespace webapi.Migrations
                     b.ToTable("Rutinas");
                 });
 
+            modelBuilder.Entity("Suscripcion", b =>
+                {
+                    b.Property<int>("SuscripcionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SuscripcionId"));
+
+                    b.Property<int>("EstadoSuscripcionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaCancelacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StripeSubscriptionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SuscripcionId");
+
+                    b.HasIndex("EstadoSuscripcionId");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Suscripcion", (string)null);
+                });
+
             modelBuilder.Entity("Usuario", b =>
                 {
                     b.Property<int>("UsuarioId")
@@ -273,12 +475,17 @@ namespace webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UsuarioId"));
 
-                    b.Property<string>("Contraseña")
-                        .IsRequired()
+                    b.Property<string>("Apellido")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailVerificado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("EmailVerificationToken")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaRegistro")
@@ -287,6 +494,23 @@ namespace webapi.Migrations
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("TokenExpirationDate")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("UsuarioId");
 
@@ -304,6 +528,17 @@ namespace webapi.Migrations
                     b.Navigation("DiaEntrenamiento");
                 });
 
+            modelBuilder.Entity("Alimento", b =>
+                {
+                    b.HasOne("Comida", "Comida")
+                        .WithMany("Alimentos")
+                        .HasForeignKey("ComidaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comida");
+                });
+
             modelBuilder.Entity("Cliente", b =>
                 {
                     b.HasOne("Usuario", "Usuario")
@@ -315,6 +550,17 @@ namespace webapi.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Comida", b =>
+                {
+                    b.HasOne("Dieta", "Dieta")
+                        .WithMany("Comidas")
+                        .HasForeignKey("DietaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dieta");
+                });
+
             modelBuilder.Entity("DiaEntrenamiento", b =>
                 {
                     b.HasOne("Rutina", "Rutina")
@@ -324,6 +570,17 @@ namespace webapi.Migrations
                         .IsRequired();
 
                     b.Navigation("Rutina");
+                });
+
+            modelBuilder.Entity("Dieta", b =>
+                {
+                    b.HasOne("Cliente", "Cliente")
+                        .WithMany("Dietas")
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("EjercicioAgrupado", b =>
@@ -356,6 +613,17 @@ namespace webapi.Migrations
                     b.Navigation("Cliente");
                 });
 
+            modelBuilder.Entity("RefreshToken", b =>
+                {
+                    b.HasOne("Usuario", "Usuario")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Rutina", b =>
                 {
                     b.HasOne("Cliente", "Cliente")
@@ -375,6 +643,33 @@ namespace webapi.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Suscripcion", b =>
+                {
+                    b.HasOne("EstadoSuscripcion", "EstadoSuscripcion")
+                        .WithMany()
+                        .HasForeignKey("EstadoSuscripcionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Plan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Usuario", "Usuario")
+                        .WithMany("Suscripciones")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EstadoSuscripcion");
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Agrupacion", b =>
                 {
                     b.Navigation("EjerciciosAgrupados");
@@ -382,14 +677,26 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("Cliente", b =>
                 {
+                    b.Navigation("Dietas");
+
                     b.Navigation("Progresos");
 
                     b.Navigation("Rutinas");
                 });
 
+            modelBuilder.Entity("Comida", b =>
+                {
+                    b.Navigation("Alimentos");
+                });
+
             modelBuilder.Entity("DiaEntrenamiento", b =>
                 {
                     b.Navigation("Agrupaciones");
+                });
+
+            modelBuilder.Entity("Dieta", b =>
+                {
+                    b.Navigation("Comidas");
                 });
 
             modelBuilder.Entity("Rutina", b =>
@@ -400,6 +707,10 @@ namespace webapi.Migrations
             modelBuilder.Entity("Usuario", b =>
                 {
                     b.Navigation("Clientes");
+
+                    b.Navigation("RefreshTokens");
+
+                    b.Navigation("Suscripciones");
                 });
 #pragma warning restore 612, 618
         }
