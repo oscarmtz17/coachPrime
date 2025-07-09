@@ -1,7 +1,9 @@
+version: "3.8"
+
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver
+    container_name: coachprime-sqlserver
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=YourStrong!Passw0rd
@@ -10,7 +12,41 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
+    networks:
+      - coachprime-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coachprime-webapi
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=CoachPrimeDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - coachprime-network
     restart: unless-stopped
 
 volumes:
   sqlserver_data:
+    driver: local
+
+networks:
+  coachprime-network:
+    driver: bridge

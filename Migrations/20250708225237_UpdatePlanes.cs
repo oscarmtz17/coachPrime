@@ -15,10 +15,13 @@ namespace webapi.Migrations
                 keyColumn: "PlanId",
                 keyValue: 2);
 
-            migrationBuilder.InsertData(
+            migrationBuilder.UpdateData(
                 table: "Plan",
-                columns: new[] { "PlanId", "Beneficios", "Estado", "Frecuencia", "MaxClientes", "Nombre", "Precio", "StripePriceId" },
-                values: new object[] { 3, "Reportes avanzados: Soporte dedicado; Integración avanzada.", "Activo", "Mensual", null, "Premium", 499.00m, "price_1Q8KUQBZAdKpouIVDKjLz25" });
+                keyColumn: "PlanId",
+                keyValue: 3,
+                column: "StripePriceId",
+                value: "price_1Q8KUQBZAdKpouIVDKjLz25"
+            );
         }
 
         /// <inheritdoc />

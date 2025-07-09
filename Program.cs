@@ -100,6 +100,15 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe: SecretKey"];
 
 var app = builder.Build();
 
+// APLICAR MIGRACIONES ANTES DE HANGFIRE Y DEMÁS SERVICIOS
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CoachPrimeContext>();
+    db.Database.Migrate();
+}
+
+// Ahora sí configura Hangfire, jobs, etc.
+
 // Seguridad: HSTS y cabeceras solo en QA/PROD
 if (!app.Environment.IsDevelopment())
 {
