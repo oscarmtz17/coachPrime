@@ -1,0 +1,72 @@
+version: "3.8"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: coachprime-prod-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_prod_data:/var/opt/mssql
+      - sqlserver_prod_backup:/var/opt/mssql/backup
+    networks:
+      - coachprime-prod-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
+
+  webapi:
+    image: ghcr.io/your-username/your-repo:latest
+    container_name: coachprime-prod-webapi
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=CoachPrimeDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft=Warning
+      - Logging__LogLevel__Microsoft.Hosting.Lifetime=Information
+      - Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Warning
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - coachprime-prod-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.25"
+
+volumes:
+  sqlserver_prod_data:
+    driver: local
+  sqlserver_prod_backup:
+    driver: local
+
+networks:
+  coachprime-prod-network:
+    driver: bridge

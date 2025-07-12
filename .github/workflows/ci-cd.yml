@@ -1,0 +1,148 @@
+name: CI/CD Pipeline - QA Deployment
+
+on:
+  push:
+    branches: [qa, master, develop]
+  pull_request:
+    branches: [master, qa]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "qa"
+        type: choice
+        options:
+          - qa
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-qa:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/qa' || github.event_name == 'workflow_dispatch'
+    environment: qa
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to QA Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.QA_HOST }}
+          username: ${{ secrets.QA_USERNAME }}
+          key: ${{ secrets.QA_SSH_KEY }}
+          port: ${{ secrets.QA_PORT }}
+          script: |
+            # Navigate to deployment directory
+            cd /opt/coachprime-qa
+
+            # Pull latest image
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Stop existing containers
+            docker-compose down
+
+            # Update docker-compose.yml with new image
+            sed -i "s|image:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|" docker-compose.yml
+
+            # Start containers
+            docker-compose up -d
+
+            # Wait for health check
+            sleep 30
+
+            # Check if containers are running
+            docker-compose ps
+
+            # Optional: Run database migrations
+            # docker-compose exec webapi dotnet ef database update
+
+      - name: Health Check
+        run: |
+          # Wait a bit more for the application to fully start
+          sleep 60
+
+          # Check if the API is responding
+          curl -f http://${{ secrets.QA_HOST }}:5000/api/health || exit 1
+
+  notify:
+    needs: [deploy-qa]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify on Success
+        if: needs.deploy-qa.result == 'success'
+        run: |
+          echo "✅ QA deployment successful!"
+          echo "Environment: QA"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "Deployed at: $(date)"
+
+      - name: Notify on Failure
+        if: needs.deploy-qa.result == 'failure'
+        run: |
+          echo "❌ QA deployment failed!"
+          echo "Check the logs for more details"
