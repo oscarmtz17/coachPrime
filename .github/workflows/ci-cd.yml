@@ -98,25 +98,25 @@ jobs:
             cd /opt/coachprime-qa
 
             # Pull latest image
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker pull ghcr.io/oscarmtz17/coachprime:latest
 
             # Stop existing containers
-            docker-compose down
+            docker-compose -f docker-compose.qa.yml down
 
-            # Update docker-compose.yml with new image
-            sed -i "s|image:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|" docker-compose.yml
+            # Update docker-compose.qa.yml with new image
+            sed -i "s|image:.*|image: ghcr.io/oscarmtz17/coachprime:latest|" docker-compose.qa.yml
 
             # Start containers
-            docker-compose up -d
+            docker-compose -f docker-compose.qa.yml up -d
 
             # Wait for health check
             sleep 30
 
             # Check if containers are running
-            docker-compose ps
+            docker-compose -f docker-compose.qa.yml ps
 
             # Optional: Run database migrations
-            # docker-compose exec webapi dotnet ef database update
+            # docker-compose -f docker-compose.qa.yml exec webapi dotnet ef database update
 
       - name: Health Check
         run: |

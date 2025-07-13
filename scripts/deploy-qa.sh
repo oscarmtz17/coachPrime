@@ -66,7 +66,7 @@ docker-compose -f "$COMPOSE_FILE" down || log "${YELLOW}No containers to stop${N
 log "Pulling latest image..."
 docker pull ghcr.io/oscarmtz17/coachprime:latest || error_exit "Failed to pull latest image"
 
-# Update docker-compose file with new image
+# Update docker-compose file with new imagee
 log "Updating docker-compose file..."
 sed -i "s|image:.*|image: ghcr.io/oscarmtz17/coachprime:latest|" "$COMPOSE_FILE"
 
