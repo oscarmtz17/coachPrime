@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
 
   webapi:
-    image: ghcr.io/your-username/your-repo:latest
+    image: ghcr.io/oscarmtz17/coachprime:latest
     container_name: coachprime-qa-webapi
     ports:
       - "5000:80"

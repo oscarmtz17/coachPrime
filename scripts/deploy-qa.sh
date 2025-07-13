@@ -64,11 +64,11 @@ docker-compose -f "$COMPOSE_FILE" down || log "${YELLOW}No containers to stop${N
 
 # Pull latest image
 log "Pulling latest image..."
-docker pull ghcr.io/your-username/your-repo:latest || error_exit "Failed to pull latest image"
+docker pull ghcr.io/oscarmtz17/coachprime:latest || error_exit "Failed to pull latest image"
 
 # Update docker-compose file with new image
 log "Updating docker-compose file..."
-# This will be done by the GitHub Actions workflow
+sed -i "s|image:.*|image: ghcr.io/oscarmtz17/coachprime:latest|" "$COMPOSE_FILE"
 
 # Start containers
 log "Starting containers..."
