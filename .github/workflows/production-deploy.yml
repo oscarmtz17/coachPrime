@@ -16,7 +16,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: oscarmtz17/coachprime
 
 jobs:
   test:
@@ -63,7 +63,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix=main-
+            type=sha,prefix=master-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
@@ -102,25 +102,28 @@ jobs:
             # Stop existing containers
             docker-compose down
 
-            # Update docker-compose.yml with new image
-            sed -i "s|image:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|" docker-compose.prod.yml
-
             # Start containers
-            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f docker-compose.yml up -d
 
             # Wait for health check
             sleep 30
 
             # Check if containers are running
-            docker-compose -f docker-compose.prod.yml ps
+            docker-compose -f docker-compose.yml ps
 
       - name: Health Check
-        run: |
-          # Wait a bit more for the application to fully start
-          sleep 60
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT }}
+          script: |
+            # Wait a bit more for the application to fully start
+            sleep 60
 
-          # Check if the API is responding
-          curl -f http://${{ secrets.PROD_HOST }}:5000/api/health || exit 1
+            # Check if the API is responding
+            curl -f http://localhost:5000/api/health || exit 1
 
   notify:
     needs: [deploy-production]

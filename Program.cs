@@ -14,17 +14,23 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar el cliente de Amazon S3 con credenciales específicas desde appsettings.json
+// Configurar AWS S3 solo si las credenciales están disponibles
 var accessKey = builder.Configuration["AWS:AccessKey"];
 var secretKey = builder.Configuration["AWS:SecretKey"];
 var region = builder.Configuration["AWS:Region"];
 
-var credentials = new BasicAWSCredentials(accessKey, secretKey);
-var s3Config = new AmazonS3Config { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region) };
-var s3Client = new AmazonS3Client(credentials, s3Config);
-
-// Registra el cliente de Amazon S3 en el contenedor de servicios
-builder.Services.AddSingleton<IAmazonS3>(s3Client);
+if (!string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey) && !string.IsNullOrEmpty(region))
+{
+    var credentials = new BasicAWSCredentials(accessKey, secretKey);
+    var s3Config = new AmazonS3Config { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region) };
+    var s3Client = new AmazonS3Client(credentials, s3Config);
+    builder.Services.AddSingleton<IAmazonS3>(s3Client);
+}
+else
+{
+    // En entornos sin AWS, registrar un servicio nulo
+    builder.Services.AddSingleton<IAmazonS3>((IServiceProvider serviceProvider) => null);
+}
 
 // Add services to the container.
 builder.Services.AddControllers();

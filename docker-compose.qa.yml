@@ -18,7 +18,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -Q 'SELECT 1' || exit 1",
+          "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/1433'",
         ]
       interval: 15s
       timeout: 5s
@@ -38,6 +38,12 @@ services:
       - Logging__LogLevel__Default=Information
       - Logging__LogLevel__Microsoft=Warning
       - Logging__LogLevel__Microsoft.Hosting.Lifetime=Information
+      - AWS__AccessKey=${AWS_ACCESS_KEY}
+      - AWS__SecretKey=${AWS_SECRET_KEY}
+      - AWS__Region=${AWS_REGION:-us-east-1}
+      - Jwt__Key=${JWT_KEY:-your-super-secret-key-for-qa-environment}
+      - Jwt__Issuer=${JWT_ISSUER:-CoachPrimeQA}
+      - Jwt__Audience=${JWT_AUDIENCE:-CoachPrimeQA}
     depends_on:
       sqlserver:
         condition: service_healthy
