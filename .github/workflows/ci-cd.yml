@@ -104,7 +104,6 @@ jobs:
             docker-compose -f docker-compose.qa.yml down
 
             # Update docker-compose.qa.yml with new image
-            sed -i "s|image:.*|image: ghcr.io/oscarmtz17/coachprime:latest|" docker-compose.qa.yml
 
             # Start containers
             docker-compose -f docker-compose.qa.yml up -d
