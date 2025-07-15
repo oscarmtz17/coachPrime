@@ -82,8 +82,8 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 
 // Configurar CORS por entorno
-string[] allowedOrigins = builder.Environment.IsDevelopment()
-    ? new[] { "http://localhost:3000" }
+string[] allowedOrigins = builder.Environment.IsDevelopment() || builder.Environment.EnvironmentName == "QA"
+    ? new[] { "http://localhost:3000", "http://67.205.163.100:3000" }
     : new[] { "https://qa.mytracksnote.com", "https://mytracksnote.com" };
 
 builder.Services.AddCors(options =>
