@@ -105,6 +105,13 @@ jobs:
 
             # Update docker-compose.qa.yml with new image
 
+            # Create .env file with AWS credentials
+            cat > .env << EOF
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            EOF
+
             # Start containers
             docker-compose -f docker-compose.qa.yml up -d
 
