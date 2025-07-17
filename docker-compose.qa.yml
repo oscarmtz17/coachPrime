@@ -41,6 +41,9 @@ services:
       - AWS__AccessKey=${AWS_ACCESS_KEY}
       - AWS__SecretKey=${AWS_SECRET_KEY}
       - AWS__Region=${AWS_REGION:-us-east-1}
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
       - Jwt__Key=${JWT_KEY:-your-super-secret-key-for-qa-environment}
       - Jwt__Issuer=${JWT_ISSUER:-CoachPrimeQA}
       - Jwt__Audience=${JWT_AUDIENCE:-CoachPrimeQA}
